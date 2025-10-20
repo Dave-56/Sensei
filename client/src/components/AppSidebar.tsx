@@ -47,7 +47,7 @@ export function AppSidebar() {
       <SidebarContent className="p-4">
         <SidebarGroup>
           <SidebarGroupLabel className="text-lg font-semibold mb-2 px-2">
-            ConvoHealth
+            Sensei
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
