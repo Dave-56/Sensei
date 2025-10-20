@@ -121,12 +121,12 @@
           <div class="p-5 rounded-lg border border-border bg-surface/50">
             <div class="text-success mb-2">●</div>
             <h3 class="font-medium">Conversation health score</h3>
-            <p class="text-sm text-text-secondary mt-1">Completion, sentiment shift, and clarifications — distilled into a single score.</p>
+            <p class="text-sm text-text-secondary mt-1">Completion, sentiment shift, and clarifications distilled into a single score.</p>
           </div>
           <div class="p-5 rounded-lg border border-border bg-surface/50">
             <div class="text-warning mb-2">●</div>
             <h3 class="font-medium">Failure detection</h3>
-            <p class="text-sm text-text-secondary mt-1">Auto‑flags loops, nonsense, and frustration — with links to conversations.</p>
+            <p class="text-sm text-text-secondary mt-1">Auto‑flags loops, nonsense, and frustration with links to conversations.</p>
           </div>
           <div class="p-5 rounded-lg border border-border bg-surface/50">
             <div class="text-accent mb-2">●</div>
@@ -150,11 +150,11 @@
           </ul>
         </div>
         <div class="bg-surface/60 border border-border rounded-xl p-4 overflow-hidden">
-<pre class="text-sm leading-6"><code>import { ConvoSensei } from '@convosensei/sdk'
+<pre class="text-sm leading-6"><code>import { Sensei } from '@sensei/sdk'
 
-const cs = new ConvoSensei({
-  apiKey: process.env.CONVOSENSEI_API_KEY,
-  baseUrl: 'https://api.convosensei.com'
+const sensei = new Sensei({
+  apiKey: process.env.SENSEI_API_KEY,
+  baseUrl: 'https://api.sensei.com'
 })
 
 await cs.track({
@@ -170,76 +170,6 @@ await cs.track({
     </section>
 
     <!-- Screens -->
-    <section id="screens" class="px-6 py-20 md:py-28 border-t border-border/60">
-      <div class="max-w-[1600px] mx-auto">
-        <h2 class="text-4xl font-bold mb-3 tracking-tight">What you get</h2>
-        <p class="text-lg text-text-secondary mb-16">Beautiful dashboards that give you instant insights into your AI conversations</p>
-        
-        <!-- Failure Detection Feature -->
-        <div class="mb-20">
-          <div class="grid md:grid-cols-2 gap-12 items-center">
-            <div>
-              <div class="flex items-center gap-3 mb-4">
-                <div class="w-8 h-8 rounded-lg bg-danger/20 flex items-center justify-center">
-                  <span class="text-danger text-lg">⚠</span>
-                </div>
-                <h3 class="text-2xl font-semibold">Failure Detection</h3>
-              </div>
-              <p class="text-text-secondary mb-6">Auto-flags loops, nonsense, and frustration — with links to conversations.</p>
-              <ul class="space-y-3 text-sm text-text-secondary">
-                <li class="flex items-center gap-3">
-                  <span class="w-1.5 h-1.5 rounded-full bg-danger"></span>
-                  Real-time failure alerts
-                </li>
-                <li class="flex items-center gap-3">
-                  <span class="w-1.5 h-1.5 rounded-full bg-danger"></span>
-                  Categorized failure types
-                </li>
-                <li class="flex items-center gap-3">
-                  <span class="w-1.5 h-1.5 rounded-full bg-danger"></span>
-                  Direct links to problematic conversations
-                </li>
-              </ul>
-            </div>
-            <div class="relative rounded-2xl overflow-hidden bg-surface/40 ring-1 ring-white/5 shadow-[0_40px_120px_-30px_rgba(239,68,68,0.15)]">
-              <img src="assets/failures.png" class="w-full h-auto object-contain" />
-            </div>
-          </div>
-        </div>
-        
-        <!-- Usage Patterns Feature -->
-        <div class="mb-20">
-          <div class="grid md:grid-cols-2 gap-12 items-center">
-            <div class="md:order-2">
-              <div class="flex items-center gap-3 mb-4">
-                <div class="w-8 h-8 rounded-lg bg-accent/20 flex items-center justify-center">
-                  <span class="text-accent text-lg">⚡</span>
-                </div>
-                <h3 class="text-2xl font-semibold">Usage Patterns</h3>
-              </div>
-              <p class="text-text-secondary mb-6">Discover intents and trending topics to guide product decisions.</p>
-              <ul class="space-y-3 text-sm text-text-secondary">
-                <li class="flex items-center gap-3">
-                  <span class="w-1.5 h-1.5 rounded-full bg-accent"></span>
-                  Auto-clustered conversation intents
-                </li>
-                <li class="flex items-center gap-3">
-                  <span class="w-1.5 h-1.5 rounded-full bg-accent"></span>
-                  Trending topic identification
-                </li>
-                <li class="flex items-center gap-3">
-                  <span class="w-1.5 h-1.5 rounded-full bg-accent"></span>
-                  Data-driven product insights
-                </li>
-              </ul>
-            </div>
-            <div class="md:order-1 relative rounded-2xl overflow-hidden bg-surface/40 ring-1 ring-white/5 shadow-[0_40px_120px_-30px_rgba(59,130,246,0.15)]">
-              <img src="assets/patterns.png" class="w-full h-auto object-contain" />
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
 
     <!-- Waitlist placeholder -->
     <section id="waitlist" class="px-6 py-16 md:py-20 border-t border-border/60">
