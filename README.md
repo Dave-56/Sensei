@@ -1,4 +1,4 @@
-# ConvoSensei
+# Sensei
 
 A lightweight analytics platform for AI conversations. It scores conversation health, detects failures, and surfaces usage patterns. Single‑admin MVP powered by Supabase + Express + Drizzle.
 
