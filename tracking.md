@@ -29,7 +29,7 @@ This document tracks the concrete steps from the current codebase to a productio
 
 ## M1 – Auth + DB Runtime Wiring
 
-- Status: Not started
+- Status: Done
 - Scope:
   - Implement Supabase JWT verification in middleware using `SUPABASE_JWT_SECRET` (or JWKS)
   - Add Drizzle runtime client: `server/db/client.ts` (pg pool + drizzle-orm/node-postgres)
