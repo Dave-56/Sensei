@@ -2,15 +2,18 @@
   "version": 2,
   "builds": [
     {
-      "src": "landing/index.html",
+      "src": "landing/**",
       "use": "@vercel/static"
     }
   ],
   "routes": [
     {
+      "src": "/assets/(.*)",
+      "dest": "/landing/assets/$1"
+    },
+    {
       "src": "/(.*)",
       "dest": "/landing/index.html"
     }
-  ],
-  "outputDirectory": "landing"
+  ]
 }
