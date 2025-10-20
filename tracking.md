@@ -90,7 +90,7 @@ This document tracks the concrete steps from the current codebase to a productio
 
 - Status: Not started
 - Scope:
-  - Publish `@convosensei/sdk` (TypeScript) with:
+  - Publish `@sensei/sdk` (TypeScript) with:
     - `init({ apiKey, baseUrl, environment })`
     - `track({ conversationId, messages[{ role, content, timestamp }], metadata })`
     - `wrap(openai|anthropic|fetch)` (optional auto‑tracking)
@@ -104,7 +104,7 @@ This document tracks the concrete steps from the current codebase to a productio
 
 - Status: Not started
 - Scope:
-  - Simple Node/TS demo agent that calls OpenAI (or mock) and integrates `@convosensei/sdk`
+  - Simple Node/TS demo agent that calls OpenAI (or mock) and integrates `@sensei/sdk`
   - CLI script and minimal web UI to run conversations; configurable with `.env`
   - Events flow through ingestion to DB so they appear in dashboard reads
   - Include seeded prompts and sample transcripts for demo purposes
@@ -195,14 +195,28 @@ This document tracks the concrete steps from the current codebase to a productio
 
 ## M10 – Marketing Site (Landing Page)
 
-- Status: Not started
+- Status: **IN PROGRESS** ✅
 - Scope:
   - Mock up and ship a minimal landing page (hero, features, code snippet, CTA)
   - Collect waitlist/newsletter signups (Supabase table or provider form)
   - Basic SEO and social cards; link to GitHub and docs
+- **COMPLETED TODAY:**
+  - ✅ Landing page deployed to Vercel
+  - ✅ Professional design with Inter font
+  - ✅ Developer-focused copywriting ("Built for developers", "AI conversation monitoring for developers")
+  - ✅ Comprehensive SEO tags (meta, Open Graph, Twitter Cards)
+  - ✅ JSON-LD structured data for search engines
+  - ✅ Tally form integration for waitlist collection
+  - ✅ Responsive design with proper code block overflow handling
+  - ✅ Updated product branding (ConvoSensei → Sensei)
+- **NEXT STEPS:**
+  - 🔄 Buy custom domain (getsensei.com or sensei.dev recommended)
+  - 🔄 Update SEO tags with real domain URL
+  - 🔄 Set up Vercel custom domain configuration
+  - 🔄 Add analytics tracking (PostHog/Google Analytics)
 - Acceptance:
-  - Landing page deploys (e.g., Vercel/Netlify), Lighthouse ≥ 90 perf/accessibility
-  - Submissions stored and viewable; brand visuals consistent with app
+  - ✅ Landing page deploys (Vercel), Lighthouse ≥ 90 perf/accessibility
+  - ✅ Submissions stored and viewable; brand visuals consistent with app
 - Dependencies: none
 
 ## Open Questions / Decisions
