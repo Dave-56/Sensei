@@ -105,7 +105,7 @@
         </div>
         <!-- Beneath-hero overview image -->
         <div class="mt-16 max-w-[1600px] mx-auto">
-          <figure class="relative rounded-3xl overflow-hidden bg-surface/40 ring-1 ring-white/5 shadow-[0_60px_160px_-40px_rgba(59,130,246,0.15)]">
+          <figure class="relative rounded-3xl overflow-x-auto bg-surface/40 ring-1 ring-white/5 shadow-[0_60px_160px_-40px_rgba(59,130,246,0.15)]">
             <img src="assets/overview.png" alt="Overview" class="w-full h-auto object-contain" />
           </figure>
         </div>
@@ -139,7 +139,7 @@
 
     <!-- SDK snippet -->
     <section id="sdk" class="px-6 py-16 md:py-20 border-t border-border/60">
-      <div class="max-w-7xl mx-auto grid md:grid-cols-2 gap-10 items-start">
+      <div class="max-w-7xl mx-auto grid lg:grid-cols-2 gap-10 items-start">
         <div>
           <h2 class="text-2xl font-semibold">Drop‑in SDK</h2>
           <p class="mt-2 text-sm text-text-secondary max-w-prose">Wrap your AI calls and track conversations with a single import. Retries, batching, and flush‑on‑unload built‑in.</p>
@@ -149,7 +149,7 @@
             <li>Optional auto‑wrapper for OpenAI/Anthropic</li>
           </ul>
         </div>
-        <div class="bg-surface/60 border border-border rounded-xl p-4 overflow-hidden">
+        <div class="bg-surface/60 border border-border rounded-xl p-4 overflow-x-auto min-w-0">
 <pre class="text-sm leading-6"><code>import { Sensei } from '@sensei/sdk'
 
 const sensei = new Sensei({
@@ -177,7 +177,7 @@ await sensei.track({
         <h2 class="text-2xl font-semibold">Get early access</h2>
         <p class="mt-2 text-sm text-text-secondary">We’re onboarding teams in batches. Get started free and we’ll reach out.</p>
         <!-- Tally form embed -->
-        <div class="mt-6 rounded-xl overflow-hidden ring-1 ring-white/10 bg-surface/60 text-left">
+        <div class="mt-6 rounded-xl overflow-x-auto ring-1 ring-white/10 bg-surface/60 text-left">
           <iframe 
             data-tally-src="https://tally.so/embed/wLQBd1?alignLeft=1&hideTitle=1&transparentBackground=1&dynamicHeight=1" 
             loading="lazy" 
