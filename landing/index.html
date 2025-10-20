@@ -67,17 +67,17 @@
       <div class="max-w-6xl mx-auto py-24 md:py-32 text-center">
         <p class="inline-flex items-center gap-2 text-xs rounded-full border border-border/70 bg-surface/50 px-3 py-1 text-text-secondary">
           <span class="w-1.5 h-1.5 rounded-full bg-success inline-block"></span>
-          Built for fast, reliable analytics
+          Built for developers
         </p>
         <h1 class="mt-4 text-5xl md:text-7xl font-bold leading-[1.1] tracking-tighter">
-          Conversation analytics for AI agents
+          AI conversation monitoring for developers
         </h1>
         <p class="mt-6 text-xl text-text-secondary max-w-3xl mx-auto leading-relaxed">
-          Score conversation health, detect failures, and understand what users are really trying to do without slowing your product down.
+          Meet the easiest way to monitor AI conversations. Debug and ship reliable AI features so much faster.
         </p>
         <div class="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
-          <a href="#waitlist" class="px-5 py-3 rounded-md bg-accent text-white font-medium hover:opacity-90">Join the waitlist</a>
-          <a href="#sdk" class="px-5 py-3 rounded-md border border-border hover:border-text/40">Explore the SDK</a>
+          <a href="#waitlist" class="px-5 py-3 rounded-md bg-accent text-white font-medium hover:opacity-90">Get started free</a>
+          <a href="#sdk" class="px-5 py-3 rounded-md border border-border hover:border-text/40">Book a demo</a>
         </div>
         <div class="mt-10 grid grid-cols-3 gap-6 text-sm text-text-secondary max-w-xl mx-auto">
           <div>
@@ -157,7 +157,7 @@ const sensei = new Sensei({
   baseUrl: 'https://api.sensei.com'
 })
 
-await cs.track({
+await sensei.track({
   conversationId: 'conv_123',
   messages: [
     { role: 'user', content: 'How do I reset my password?', timestamp: Date.now() },
@@ -175,7 +175,7 @@ await cs.track({
     <section id="waitlist" class="px-6 py-16 md:py-20 border-t border-border/60">
       <div class="max-w-2xl mx-auto text-center">
         <h2 class="text-2xl font-semibold">Get early access</h2>
-        <p class="mt-2 text-sm text-text-secondary">We’re onboarding teams in batches. Join the waitlist and we’ll reach out.</p>
+        <p class="mt-2 text-sm text-text-secondary">We’re onboarding teams in batches. Get started free and we’ll reach out.</p>
         <!-- Tally form embed -->
         <div class="mt-6 rounded-xl overflow-hidden ring-1 ring-white/10 bg-surface/60 text-left">
           <iframe 
