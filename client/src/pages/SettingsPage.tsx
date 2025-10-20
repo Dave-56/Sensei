@@ -3,18 +3,16 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Key, Bell, Webhook, User } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Key, Bell, Users, Webhook } from "lucide-react";
+import { FaGithub } from "react-icons/fa";
+import { FcGoogle } from "react-icons/fc";
 
-//todo: remove mock functionality
-const mockTeamMembers = [
-  { id: "1", name: "John Doe", email: "john@example.com", role: "Admin" },
-  { id: "2", name: "Jane Smith", email: "jane@example.com", role: "Member" },
-  { id: "3", name: "Bob Johnson", email: "bob@example.com", role: "Member" },
-];
+// single-user MVP: no teams/members
 
 export default function SettingsPage() {
   const [slackEnabled, setSlackEnabled] = useState(true);
@@ -25,7 +23,7 @@ export default function SettingsPage() {
       <div>
         <h1 className="text-2xl font-semibold mb-2">Settings</h1>
         <p className="text-sm text-muted-foreground">
-          Configure integrations, alerts, and team access
+          Configure API keys, integrations, and alert thresholds (single admin)
         </p>
       </div>
 
@@ -43,9 +41,9 @@ export default function SettingsPage() {
             <Bell className="w-4 h-4 mr-2" />
             Alerts
           </TabsTrigger>
-          <TabsTrigger value="team" data-testid="tab-team">
-            <Users className="w-4 h-4 mr-2" />
-            Team
+          <TabsTrigger value="admin" data-testid="tab-admin">
+            <User className="w-4 h-4 mr-2" />
+            Admin
           </TabsTrigger>
         </TabsList>
 
@@ -175,37 +173,132 @@ export default function SettingsPage() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="team">
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">Team Members</h3>
-              <Button data-testid="button-invite-member">Invite Member</Button>
-            </div>
-            <div className="space-y-3">
-              {mockTeamMembers.map((member) => (
-                <div
-                  key={member.id}
-                  className="flex items-center justify-between p-3 rounded-md border hover-elevate"
-                  data-testid={`team-member-${member.id}`}
-                >
-                  <div className="flex items-center gap-3">
-                    <Avatar>
-                      <AvatarFallback className="bg-primary text-primary-foreground">
-                        {member.name.split(' ').map(n => n[0]).join('')}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="font-medium">{member.name}</p>
-                      <p className="text-sm text-muted-foreground">{member.email}</p>
-                    </div>
-                  </div>
-                  <Badge variant={member.role === "Admin" ? "default" : "secondary"}>
-                    {member.role}
-                  </Badge>
+        {null}
+
+        <TabsContent value="admin">
+          <div className="grid gap-6 md:grid-cols-2">
+            <Card className="p-6 space-y-4">
+              <div>
+                <h3 className="text-lg font-semibold">Account</h3>
+                <p className="text-sm text-muted-foreground">Profile and session details</p>
+              </div>
+              <div className="flex items-center gap-4">
+                <Avatar className="h-10 w-10">
+                  <AvatarFallback>AD</AvatarFallback>
+                </Avatar>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium">admin@example.com</p>
+                  <p className="text-xs text-muted-foreground">Provider: Email (verified)</p>
                 </div>
-              ))}
-            </div>
-          </Card>
+              </div>
+              <div className="flex gap-2">
+                <Button disabled title="Coming soon" data-testid="button-change-email">Change Email</Button>
+                <Button variant="outline" disabled title="Coming soon" data-testid="button-change-password">Change Password</Button>
+              </div>
+              <div className="text-xs text-muted-foreground">Last login: 2 hours ago • IP 203.0.113.5</div>
+            </Card>
+
+            <Card className="p-6 space-y-4">
+              <div>
+                <h3 className="text-lg font-semibold">Security</h3>
+                <p className="text-sm text-muted-foreground">Protect your account</p>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <p className="text-sm font-medium">Two-Factor Authentication</p>
+                  <p className="text-xs text-muted-foreground">Add an extra layer of security</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge variant="secondary">Off</Badge>
+                  <Button size="sm" disabled title="Coming soon" data-testid="button-enable-2fa">Enable 2FA</Button>
+                </div>
+              </div>
+              <Separator />
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <p className="text-sm font-medium">Recovery Codes</p>
+                  <p className="text-xs text-muted-foreground">Use if you lose access to 2FA</p>
+                </div>
+                <Button size="sm" variant="outline" disabled title="Coming soon" data-testid="button-generate-recovery-codes">Generate</Button>
+              </div>
+            </Card>
+
+            <Card className="p-6 space-y-4">
+              <div>
+                <h3 className="text-lg font-semibold">Connected Providers</h3>
+                <p className="text-sm text-muted-foreground">OAuth connections</p>
+              </div>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <FaGithub className="w-4 h-4" />
+                    <span className="text-sm">GitHub</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary">Not connected</Badge>
+                    <Button size="sm" disabled title="Coming soon" data-testid="button-connect-github">Connect</Button>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <FcGoogle className="w-4 h-4" />
+                    <span className="text-sm">Google</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge>Connected</Badge>
+                    <Button size="sm" variant="outline" disabled title="Coming soon" data-testid="button-disconnect-google">Disconnect</Button>
+                  </div>
+                </div>
+              </div>
+            </Card>
+
+            <Card className="p-6 space-y-4">
+              <div>
+                <h3 className="text-lg font-semibold">Active Sessions</h3>
+                <p className="text-sm text-muted-foreground">Signed-in devices</p>
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between p-3 rounded-md border">
+                  <div>
+                    <p className="text-sm font-medium">Chrome on macOS • This device</p>
+                    <p className="text-xs text-muted-foreground">Last seen just now • San Francisco</p>
+                  </div>
+                  <Button size="sm" variant="outline" disabled title="Coming soon" data-testid="button-revoke-session-1">Revoke</Button>
+                </div>
+                <div className="flex items-center justify-between p-3 rounded-md border">
+                  <div>
+                    <p className="text-sm font-medium">Safari on iPhone</p>
+                    <p className="text-xs text-muted-foreground">Last seen 3 days ago • New York</p>
+                  </div>
+                  <Button size="sm" variant="outline" disabled title="Coming soon" data-testid="button-revoke-session-2">Revoke</Button>
+                </div>
+              </div>
+              <div className="flex justify-end">
+                <Button variant="ghost" data-testid="signout">Sign Out</Button>
+              </div>
+            </Card>
+
+            <Card className="p-6 space-y-4 md:col-span-2">
+              <div>
+                <h3 className="text-lg font-semibold">Security Log</h3>
+                <p className="text-sm text-muted-foreground">Recent account activity</p>
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between p-3 rounded-md border">
+                  <span className="text-sm">Signed in from Chrome on macOS</span>
+                  <span className="text-xs text-muted-foreground">2h ago</span>
+                </div>
+                <div className="flex items-center justify-between p-3 rounded-md border">
+                  <span className="text-sm">Changed alert threshold</span>
+                  <span className="text-xs text-muted-foreground">1d ago</span>
+                </div>
+                <div className="flex items-center justify-between p-3 rounded-md border">
+                  <span className="text-sm">Generated new API key</span>
+                  <span className="text-xs text-muted-foreground">5d ago</span>
+                </div>
+              </div>
+            </Card>
+          </div>
         </TabsContent>
       </Tabs>
     </div>

@@ -1,5 +1,8 @@
-import { type User, type InsertUser } from "@shared/schema";
 import { randomUUID } from "crypto";
+
+// Local in-memory types used only for demo/mock login flows.
+export interface User { id: string; username: string; password: string }
+export type InsertUser = Omit<User, "id">;
 
 // modify the interface with any CRUD methods
 // you might need
