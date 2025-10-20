@@ -1,10 +1,10 @@
-# ConvoSensei MVP
+# Sensei
 
 ## Overview
 **Timeline:** 2 weeks  
 **Core Product:** A simple SDK that wraps around your AI calls + a dashboard
 
-## Three Killer Features
+## Three Features
 
 ### 1. Conversation Health Score
 **Question:** Did the user get what they needed?

@@ -1,4 +1,4 @@
-# ConvoSensei – Product Tracking Plan (MVP ➜ Prod)
+# Sensei – Product Tracking Plan (MVP ➜ Prod)
 
 This document tracks the concrete steps from the current codebase to a production‑ready MVP. Each item lists scope, acceptance criteria, and dependencies. Use it as the single checklist for PM + eng alignment.
 
@@ -10,10 +10,13 @@ This document tracks the concrete steps from the current codebase to a productio
 - M3 – Settings + API Keys – DB‑backed
 - M4A – SDK (client library)
 - M4B – Ingestion API (track conversations)
+- M4C – Demo Agent + SDK Playground
 - M5 – Worker Pipeline (Queue + processing)
 - M6 – Alerts (Slack) – optional for MVP
 - M7 – Frontend switch to live data
 - M8 – Testing, hardening, and deploy
+- M9 – Growth & Adoption (Onboarding, Email, Analytics)
+- M10 – Marketing Site (Landing Page)
 
 ## M0 – Database Ready (Done)
 
@@ -41,7 +44,7 @@ This document tracks the concrete steps from the current codebase to a productio
 
 ## M2 – Read APIs (Dashboard) – DB‑Backed
 
-- Status: Not started
+- Status: Done
 - Scope (port from mock to DB):
   - GET `/api/v1/conversations` (filters: timeframe, health range, has_failures; pagination)
   - GET `/api/v1/conversations/:id/messages`
@@ -53,7 +56,7 @@ This document tracks the concrete steps from the current codebase to a productio
 - Acceptance:
   - Each endpoint returns data from Supabase tables (no mock)
   - Basic input validation (zod) and consistent error envelope
-  - P95 ≤ 200ms locally for read endpoints
+  - P95 ≤ 200ms locally for read endpoints (moved to M8 benchmarking)
 - Dependencies: M1
 
 ## Write APIs (Dashboard/Admin)
@@ -92,10 +95,23 @@ This document tracks the concrete steps from the current codebase to a productio
     - `track({ conversationId, messages[{ role, content, timestamp }], metadata })`
     - `wrap(openai|anthropic|fetch)` (optional auto‑tracking)
   - Behavior: API key auth; retries with backoff; optional small batching; flush on unload
+  - Acceptance:
+    - Example app can send 100 msgs/min without blocking UX
+    - Successful calls visible in server logs; data appears via read APIs
+  - Dependencies: M3
+
+## M4C – Demo Agent + SDK Playground
+
+- Status: Not started
+- Scope:
+  - Simple Node/TS demo agent that calls OpenAI (or mock) and integrates `@convosensei/sdk`
+  - CLI script and minimal web UI to run conversations; configurable with `.env`
+  - Events flow through ingestion to DB so they appear in dashboard reads
+  - Include seeded prompts and sample transcripts for demo purposes
 - Acceptance:
-  - Example app can send 100 msgs/min without blocking UX
-  - Successful calls visible in server logs; data appears via read APIs
-- Dependencies: M3
+  - `npm run demo:agent` runs a conversation and data shows in `/conversations` and analytics
+  - README instructions for setup and API key use (one‑time secret from M3)
+- Dependencies: M4A, M4B
 
 ## M4B – Ingestion API (Minimal)
 
@@ -156,10 +172,38 @@ This document tracks the concrete steps from the current codebase to a productio
   - Basic integration tests for core endpoints
   - Observability: request log, error handler; minimal health check endpoint
   - Deployment: environment config, start scripts, build pipeline
+  - Performance: benchmark read endpoints (P50/P95/P99); ensure P95 ≤ 200ms locally; add/adjust indexes if needed
 - Acceptance:
   - CI runs migrations and tests
   - Staging and production deploys succeed; env documented
+  - Performance targets verified for read endpoints (local dev)
 - Dependencies: M1–M7 (as applicable)
+
+## M9 – Growth & Adoption (Onboarding, Email, Analytics)
+
+- Status: Not started
+- Scope:
+  - Email automation: transactional + onboarding (welcome, weekly summary); provider (Resend/Sendgrid/Postmark)
+  - Product onboarding: in‑app checklist + guided tooltips; docs page: `docs/onboarding.md`
+  - Analytics + session replay: integrate PostHog (events + replays) with env‑gated flags
+  - Branding: basic brand kit (logo, colors), update README badges and screenshots
+- Acceptance:
+  - New admin receives welcome email and can trigger a weekly summary
+  - First‑run experience shows onboarding checklist; key events visible in PostHog; session replay works
+  - Privacy: DNT honored; ability to disable replays via env
+- Dependencies: M7
+
+## M10 – Marketing Site (Landing Page)
+
+- Status: Not started
+- Scope:
+  - Mock up and ship a minimal landing page (hero, features, code snippet, CTA)
+  - Collect waitlist/newsletter signups (Supabase table or provider form)
+  - Basic SEO and social cards; link to GitHub and docs
+- Acceptance:
+  - Landing page deploys (e.g., Vercel/Netlify), Lighthouse ≥ 90 perf/accessibility
+  - Submissions stored and viewable; brand visuals consistent with app
+- Dependencies: none
 
 ## Open Questions / Decisions
 
