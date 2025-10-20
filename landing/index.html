@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sensei – Conversation Analytics for AI</title>
+    <meta name="description" content="Score conversation health, detect failures, and surface usage patterns for your AI agents." />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tally embed config: set your form id here -->
+    <meta name="tally-form-id" content="REPLACE_TALLY_FORM_ID" />
+    <script defer src="https://tally.so/widgets/embed.js"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              bg: '#111317',
+              surface: '#171A1F',
+              border: '#2A2F36',
+              text: {
+                DEFAULT: '#F2F2F2',
+                secondary: '#A3A3A3',
+              },
+              accent: '#3B82F6',
+              success: '#22C55E',
+              warning: '#F59E0B',
+              danger: '#EF4444',
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      :root { color-scheme: dark; }
+      body { font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"; }
+      code, pre { font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    </style>
+  </head>
+  <body class="bg-bg text-text">
+    <!-- Nav -->
+    <header class="border-b border-border/60 sticky top-0 z-10 backdrop-blur bg-bg/70">
+      <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="h-8 w-8 rounded-lg bg-accent/20 grid place-items-center text-accent font-bold">S</div>
+          <span class="font-semibold">Sensei</span>
+        </div>
+        <nav class="hidden md:flex items-center gap-6 text-text/80 text-sm">
+          <a href="#features" class="hover:text-text">Features</a>
+          <a href="#sdk" class="hover:text-text">SDK</a>
+          <a href="#waitlist" class="px-3 py-1.5 rounded-md bg-accent/90 text-white hover:bg-accent tally-open" data-tally-open="REPLACE_TALLY_FORM_ID" data-tally-layout="modal" data-tally-overlay="1">Join Waitlist</a>
+        </nav>
+      </div>
+    </header>
+
+    <!-- Hero -->
+    <section class="px-6">
+      <div class="max-w-[1440px] mx-auto py-20 md:py-28 grid md:grid-cols-2 md:[grid-template-columns:0.85fr_1.6fr] gap-10 items-center">
+        <div class="max-w-[560px]">
+          <h1 class="text-4xl md:text-6xl font-semibold leading-[1.05] tracking-tight">Conversation analytics for AI agents</h1>
+          <p class="mt-5 text-lg text-text-secondary max-w-[560px]">Score conversation health, detect failures, and discover what users are actually trying to do — all without slowing your product down.</p>
+          <div class="mt-8 flex gap-4">
+            <a href="#waitlist" class="px-5 py-3 rounded-md bg-accent text-white font-medium hover:opacity-90 tally-open" data-tally-open="REPLACE_TALLY_FORM_ID" data-tally-layout="modal" data-tally-overlay="1">Join the waitlist</a>
+            <a href="#sdk" class="px-5 py-3 rounded-md border border-border hover:border-text/40">See the SDK</a>
+          </div>
+          <div class="mt-8 grid grid-cols-3 gap-6 text-sm text-text-secondary">
+            <div><div class="text-2xl font-semibold text-text"><span class="align-middle">100</span><span class="text-text-secondary align-middle">ms</span></div><div>Overhead target</div></div>
+            <div><div class="text-2xl font-semibold text-text">200<span class="text-text-secondary">ms</span></div><div>Read P95</div></div>
+            <div><div class="text-2xl font-semibold text-text">1<span class="text-text-secondary"> page</span></div><div>Drop‑in SDK</div></div>
+          </div>
+        </div>
+        <div class="relative bg-surface/60 rounded-2xl p-0 ring-1 ring-white/10 shadow-[0_40px_120px_-30px_rgba(59,130,246,0.35)] md:-mr-10 lg:-mr-16 xl:-mr-24 2xl:-mr-32 overflow-hidden">
+          <img src="../assets/overview.png" alt="Overview" class="w-full h-auto object-cover" />
+        </div>
+      </div>
+    </section>
+
+    <!-- Features -->
+    <section id="features" class="px-6 py-16 md:py-20 border-t border-border/60">
+      <div class="max-w-7xl mx-auto">
+        <h2 class="text-2xl font-semibold">Three killer features</h2>
+        <div class="mt-8 grid md:grid-cols-3 gap-6">
+          <div class="p-5 rounded-lg border border-border bg-surface/50">
+            <div class="text-success mb-2">●</div>
+            <h3 class="font-medium">Conversation health score</h3>
+            <p class="text-sm text-text-secondary mt-1">Completion, sentiment shift, and clarifications — distilled into a single score.</p>
+          </div>
+          <div class="p-5 rounded-lg border border-border bg-surface/50">
+            <div class="text-warning mb-2">●</div>
+            <h3 class="font-medium">Failure detection</h3>
+            <p class="text-sm text-text-secondary mt-1">Auto‑flags loops, nonsense, and frustration — with links to conversations.</p>
+          </div>
+          <div class="p-5 rounded-lg border border-border bg-surface/50">
+            <div class="text-accent mb-2">●</div>
+            <h3 class="font-medium">Usage patterns</h3>
+            <p class="text-sm text-text-secondary mt-1">Discover intents and trending topics to guide product decisions.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SDK snippet -->
+    <section id="sdk" class="px-6 py-16 md:py-20 border-t border-border/60">
+      <div class="max-w-7xl mx-auto grid md:grid-cols-2 gap-10 items-start">
+        <div>
+          <h2 class="text-2xl font-semibold">Drop‑in SDK</h2>
+          <p class="mt-2 text-sm text-text-secondary max-w-prose">Wrap your AI calls and track conversations with a single import. Retries, batching, and flush‑on‑unload built‑in.</p>
+          <ul class="mt-6 space-y-2 text-sm text-text-secondary list-disc pl-5">
+            <li>One‑time SDK init with API key</li>
+            <li>Track messages and metadata</li>
+            <li>Optional auto‑wrapper for OpenAI/Anthropic</li>
+          </ul>
+        </div>
+        <div class="bg-surface/60 border border-border rounded-xl p-4 overflow-hidden">
+<pre class="text-sm leading-6"><code>import { ConvoSensei } from '@convosensei/sdk'
+
+const cs = new ConvoSensei({
+  apiKey: process.env.CONVOSENSEI_API_KEY,
+  baseUrl: 'https://api.convosensei.com'
+})
+
+await cs.track({
+  conversationId: 'conv_123',
+  messages: [
+    { role: 'user', content: 'How do I reset my password?', timestamp: Date.now() },
+    { role: 'assistant', content: 'Here are the steps…', timestamp: Date.now() }
+  ],
+  metadata: { userId: 'user_456' }
+})</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- Screens -->
+    <section id="screens" class="px-6 py-16 md:py-24 border-t border-border/60">
+      <div class="max-w-[1440px] mx-auto">
+        <h2 class="text-2xl font-semibold">What you get</h2>
+        <div class="mt-8 space-y-8">
+          <figure class="relative rounded-2xl overflow-hidden bg-surface/60 ring-1 ring-white/10 shadow-[0_40px_120px_-30px_rgba(59,130,246,0.25)]">
+            <img src="../assets/patterns.png" alt="Patterns view" class="w-full h-auto object-cover" />
+            <figcaption class="absolute top-3 left-3 text-xs px-2 py-1 rounded-md bg-black/40 backdrop-blur text-white/90 border border-white/10">Patterns</figcaption>
+          </figure>
+          <figure class="relative rounded-2xl overflow-hidden bg-surface/60 ring-1 ring-white/10 shadow-[0_40px_120px_-30px_rgba(239,68,68,0.18)]">
+            <img src="../assets/failures.png" alt="Failures view" class="w-full h-auto object-cover" />
+            <figcaption class="absolute top-3 left-3 text-xs px-2 py-1 rounded-md bg-black/40 backdrop-blur text-white/90 border border-white/10">Failures</figcaption>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <!-- Waitlist placeholder -->
+    <section id="waitlist" class="px-6 py-16 md:py-20 border-t border-border/60">
+      <div class="max-w-2xl mx-auto text-center">
+        <h2 class="text-2xl font-semibold">Get early access</h2>
+        <p class="mt-2 text-sm text-text-secondary">We’re onboarding teams in batches. Join the waitlist and we’ll reach out.</p>
+        <!-- Inline Tally embed (replace REPLACE_TALLY_FORM_ID with your form id) -->
+        <div class="mt-6 rounded-xl overflow-hidden ring-1 ring-white/10 bg-surface/60 text-left">
+          <iframe
+            data-tally-src="https://tally.so/r/REPLACE_TALLY_FORM_ID?transparentBackground=1&hideTitle=1&dynamicHeight=1"
+            loading="lazy"
+            width="100%"
+            height="300"
+            frameborder="0"
+            marginheight="0"
+            marginwidth="0"
+            title="Join the waitlist"
+          ></iframe>
+        </div>
+        <p class="mt-2 text-xs text-text-secondary">We’ll never spam you. Unsubscribe any time.</p>
+      </div>
+    </section>
+
+    <footer class="px-6 py-10 border-t border-border/60">
+      <div class="max-w-7xl mx-auto text-sm text-text-secondary flex items-center justify-between">
+        <span>© ConvoSensei</span>
+        <div class="flex gap-4">
+          <a href="#" class="hover:text-text">Privacy</a>
+          <a href="#" class="hover:text-text">Terms</a>
+        </div>
+      </div>
+    </footer>
+    <script>
+      // Wire Tally modal + inline embed using the meta form id
+      (function () {
+        const meta = document.querySelector('meta[name="tally-form-id"]');
+        const formId = meta?.content || 'REPLACE_TALLY_FORM_ID';
+        document.querySelectorAll('.tally-open').forEach((el) => el.setAttribute('data-tally-open', formId));
+
+        const initEmbeds = function () {
+          if (typeof Tally !== 'undefined') {
+            Tally.loadEmbeds();
+          } else {
+            document
+              .querySelectorAll('iframe[data-tally-src]:not([src])')
+              .forEach((e) => (e.src = e.dataset.tallySrc.replace('REPLACE_TALLY_FORM_ID', formId)));
+          }
+        };
+        if (document.readyState === 'complete') initEmbeds();
+        else window.addEventListener('DOMContentLoaded', initEmbeds);
+      })();
+    </script>
+  </body>
+  <!-- PostHog hook will be added later (env-gated) -->
+</html>
