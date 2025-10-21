@@ -93,7 +93,14 @@
       "url": "https://your-domain.com",
       "sameAs": []
     }
-    </script>  </head>
+    </script>
+    
+    <!-- PostHog Analytics -->
+    <script>
+      !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]);t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.async=!0,p.src=s.api_host+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="capture identify alias people.set people.set_once set_config register register_once unregister opt_out_capturing has_opted_out_capturing opt_in_capturing reset isFeatureEnabled onFeatureFlags getFeatureFlag getFeatureFlagPayload reloadFeatureFlags group updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures getActiveMatchingSurveys getSurveys".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+      posthog.init('phc-your-key-here', {api_host: 'https://app.posthog.com'})
+    </script>
+  </head>
   <body class="bg-bg text-text">
     <!-- Nav -->
     <header class="border-b border-border/60 sticky top-0 z-10 backdrop-blur bg-bg/70">
@@ -105,7 +112,7 @@
         <nav class="hidden md:flex items-center gap-6 text-text/80 text-sm">
           <a href="#features" class="hover:text-text">Features</a>
           <a href="#sdk" class="hover:text-text">SDK</a>
-          <a href="#waitlist" class="px-3 py-1.5 rounded-md bg-accent/90 text-white hover:bg-accent">Join Waitlist</a>
+          <a href="#waitlist" class="px-3 py-1.5 rounded-md bg-accent/90 text-white hover:bg-accent" onclick="posthog.capture('cta_clicked', {cta_type: 'waitlist', location: 'nav'})">Join Waitlist</a>
         </nav>
       </div>
     </header>
@@ -127,8 +134,8 @@
           Ship AI features your users actually trust.
         </p> -->
         <div class="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
-          <a href="#waitlist" class="px-5 py-3 rounded-md bg-accent text-white font-medium hover:opacity-90">See what your AI is really saying</a>
-          <a href="#sdk" class="px-5 py-3 rounded-md border border-border hover:border-text/40">Book a demo</a>
+          <a href="#waitlist" class="px-5 py-3 rounded-md bg-accent text-white font-medium hover:opacity-90" onclick="posthog.capture('cta_clicked', {cta_type: 'waitlist', location: 'hero'})">See what your AI is really saying</a>
+          <a href="#sdk" class="px-5 py-3 rounded-md border border-border hover:border-text/40" onclick="posthog.capture('cta_clicked', {cta_type: 'demo', location: 'hero'})">Book a demo</a>
         </div>
         <div class="mt-10 grid grid-cols-3 gap-6 text-sm text-text-secondary max-w-xl mx-auto">
           <div>
@@ -175,7 +182,7 @@
           <div class="p-5 rounded-lg border border-border bg-surface/50">
             <div class="text-success mb-2">●</div>
             <h3 class="font-medium">Conversation health score</h3>
-            <p class="text-sm text-text-secondary mt-1">Quantifies if your AI was actually helpful — not just responsive.</p>
+            <p class="text-sm text-text-secondary mt-1">Quantifies if your AI was actually helpful not just responsive.</p>
           </div>
           <div class="p-5 rounded-lg border border-border bg-surface/50">
             <div class="text-warning mb-2">●</div>
