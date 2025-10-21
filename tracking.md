@@ -59,15 +59,24 @@ This document tracks the concrete steps from the current codebase to a productio
   - P95 ≤ 200ms locally for read endpoints (moved to M8 benchmarking)
 - Dependencies: M1
 
-## Write APIs (Dashboard/Admin)
+## M2B - Write APIs (Dashboard/Admin)
 
-- Status: Not started
-- Scope (all use Bearer auth; validate with zod):
-  - Failures: `PATCH /api/v1/failures/:id` { status: 'open'|'ack'|'resolved' }
-  - Saved Views: `POST /api/v1/saved-views` { name, scope, config }, `PUT /api/v1/saved-views/:id`, `DELETE /api/v1/saved-views/:id`
-  - Settings: `PUT /api/v1/settings` { slack_webhook_url?, alert_thresholds? }
-  - API Keys: `POST /api/v1/api-keys` (generate prefix+secret, store key_hash), `DELETE /api/v1/api-keys/:id`
-  - Notes: enforce single-row invariant for `app_settings` (id=1), hash secrets at rest, update `last_used_at` on use
+- Status: Done
+- **IMPLEMENTED APIs:**
+  - ✅ Failures: `PATCH /api/v1/failures/:id` { status: 'open'|'ack'|'resolved' } - **IMPLEMENTED** (using mock DB)
+  - ✅ Settings: `PUT /api/v1/settings` { slack_webhook_url?, alert_thresholds? } - **IMPLEMENTED** (using mock DB)
+  - ✅ API Keys: `POST /api/v1/api-keys` (generate prefix+secret), `DELETE /api/v1/api-keys/:id` - **IMPLEMENTED** (using mock DB)
+- **MISSING APIs:**
+  - ❌ Saved Views: `POST /api/v1/saved-views` { name, scope, config }, `PUT /api/v1/saved-views/:id`, `DELETE /api/v1/saved-views/:id` - **NOT IMPLEMENTED**
+- **IMPLEMENTATION ISSUES:**
+  - ⚠️ **Database Integration**: All write APIs currently use mock DB instead of Supabase (data lost on restart)
+  - ⚠️ **Validation**: No zod request body validation (tracking requirement not met)
+  - ⚠️ **Security**: No API key hashing, no `last_used_at` tracking, no single-row invariant enforcement
+- **NEXT STEPS:**
+  - 🔄 Migrate write APIs from mock DB to Supabase DB
+  - 🔄 Add zod validation schemas for all request bodies
+  - 🔄 Implement API key hashing and security features
+  - 🔄 Create saved views API routes (database schema ready)
 - Acceptance:
   - Writes persist to Supabase DB; invalid payloads return 400 with details
   - Idempotent updates where applicable (settings/saved views)
@@ -75,12 +84,22 @@ This document tracks the concrete steps from the current codebase to a productio
 
 ## M3 – Settings + API Keys – DB‑Backed
 
-- Status: Not started
-- Scope:
-  - GET/PUT `/api/v1/settings` -> `app_settings`
-  - GET/POST/DELETE `/api/v1/api-keys` -> `api_keys`
-  - Key creation: generate prefix+secret, store `key_hash` (bcrypt/scrypt/argon2), never store plaintext
-  - Update `last_used_at` when a key authenticates ingestion
+- Status: **PARTIALLY IMPLEMENTED** ⚠️
+- **IMPLEMENTED:**
+  - ✅ GET/PUT `/api/v1/settings` - **IMPLEMENTED** (using mock DB)
+  - ✅ GET/POST/DELETE `/api/v1/api-keys` - **IMPLEMENTED** (using mock DB)
+- **MISSING:**
+  - ❌ Key creation: generate prefix+secret, store `key_hash` (bcrypt/scrypt/argon2), never store plaintext
+  - ❌ Update `last_used_at` when a key authenticates ingestion
+  - ❌ Database integration (currently using mock DB)
+- **IMPLEMENTATION ISSUES:**
+  - ⚠️ **Security**: API keys stored in plaintext in mock DB (no hashing)
+  - ⚠️ **Persistence**: Data lost on server restart (mock DB)
+  - ⚠️ **Tracking**: No `last_used_at` updates
+- **NEXT STEPS:**
+  - 🔄 Migrate to Supabase DB with proper key hashing
+  - 🔄 Implement bcrypt/scrypt/argon2 for key storage
+  - 🔄 Add `last_used_at` tracking in ingestion middleware
 - Acceptance:
   - Creating a key returns one‑time secret; listing shows only metadata
   - Revoking removes/marks key and prevents use
@@ -115,13 +134,19 @@ This document tracks the concrete steps from the current codebase to a productio
 
 ## M4B – Ingestion API (Minimal)
 
-- Status: Not started
-- Scope:
-  - Route: `POST /api/v1/conversations/track`
-  - Auth: API key header (prefix match + hash verify)
-  - Idempotency: upsert `conversations` by `external_id`
-  - Writes `messages` rows (role, content, timestamp, metadata)
-  - Inline sentiment placeholder; or enqueue processing if queue enabled
+- Status: **IMPLEMENTED** ✅
+- **IMPLEMENTED:**
+  - ✅ Route: `POST /api/v1/conversations/track` - **IMPLEMENTED**
+  - ✅ Auth: API key header (prefix match + hash verify) - **IMPLEMENTED**
+  - ✅ Writes `messages` rows (role, content, timestamp, metadata) - **IMPLEMENTED**
+- **IMPLEMENTATION ISSUES:**
+  - ⚠️ **Database**: Currently using mock DB instead of Supabase (data lost on restart)
+  - ⚠️ **Idempotency**: No upsert by `external_id` (tracking requirement not met)
+  - ⚠️ **Processing**: Inline sentiment placeholder only, no queue processing
+- **NEXT STEPS:**
+  - 🔄 Migrate from mock DB to Supabase DB
+  - 🔄 Implement upsert by `external_id` for idempotency
+  - 🔄 Add proper sentiment processing or queue integration
 - Acceptance:
   - SDK or cURL can push a sample conversation; it appears in dashboard reads
 - Dependencies: M3
@@ -228,8 +253,22 @@ This document tracks the concrete steps from the current codebase to a productio
 
 ## Current Risks & Mitigations
 
-- Drift between mock and DB responses
-  - Mitigation: add zod response schemas shared by client/server
+- **Mock vs DB Data Drift** ⚠️ **ACTIVE RISK**
+  - **Issue**: Write APIs use mock DB while read APIs use Supabase DB, causing data inconsistency
+  - **Impact**: Write operations (failures, settings, API keys) don't persist and are lost on restart
+  - **Mitigation**: Migrate all write APIs to Supabase DB (priority fix)
+- **Missing Request Validation** ⚠️ **ACTIVE RISK**
+  - **Issue**: Write APIs lack zod validation, allowing malicious payloads
+  - **Impact**: Security vulnerability, no proper error responses
+  - **Mitigation**: Add zod schemas for all request bodies (tracking requirement)
+- **API Key Security** ⚠️ **ACTIVE RISK**
+  - **Issue**: API keys stored in plaintext, no hashing, no usage tracking
+  - **Impact**: Security vulnerability, no audit trail
+  - **Mitigation**: Implement bcrypt/scrypt/argon2 hashing and `last_used_at` tracking
+- **Saved Views Missing** ⚠️ **ACTIVE RISK**
+  - **Issue**: Database schema ready but no API endpoints implemented
+  - **Impact**: Feature incomplete, database table unused
+  - **Mitigation**: Create saved views API routes (infrastructure ready)
 - Auth verification incomplete
   - Mitigation: implement JWT verify in M1, gate all dashboard endpoints
 - Migrations safety (using push in dev)

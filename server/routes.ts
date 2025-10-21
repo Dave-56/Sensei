@@ -8,6 +8,7 @@ import { registerPatternsRoutes } from "./routes/patterns";
 import { registerFailuresRoutes } from "./routes/failures";
 import { registerSettingsRoutes } from "./routes/settings";
 import { registerApiKeysRoutes } from "./routes/apiKeys";
+import { registerSavedViewsRoutes } from "./routes/savedViews";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Register domain routes
@@ -19,6 +20,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerFailuresRoutes(app);
   registerSettingsRoutes(app);
   registerApiKeysRoutes(app);
+  registerSavedViewsRoutes(app);
 
   const httpServer = createServer(app);
 
