@@ -134,7 +134,9 @@
           Your AI shouldn’t be a black box
         </h1>
         <p class="mt-6 text-xl text-text-secondary max-w-3xl mx-auto leading-relaxed">
-          See what’s working, what’s not, and how to improve every conversation.
+          PMs waste hours manually reviewing traces to find what's broken. 
+          <strong class="text-text">We automatically detect and cluster your top problems</strong> 
+          so you know exactly what to fix first.
         </p>
         <!-- <p class="mt-2 text-xl text-text-secondary max-w-3xl mx-auto leading-relaxed">
           Ship AI features your users actually trust.
@@ -184,23 +186,59 @@
       <div class="max-w-7xl mx-auto">
         <h2 class="text-4xl font-bold mb-3 tracking-tight">Core Features</h2>
         <p class="text-lg text-text-secondary mb-16">Everything you need to understand and improve your AI conversations</p>
-        <div class="grid md:grid-cols-3 gap-8">
+        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
           <div class="p-5 rounded-lg border border-border bg-surface/50">
             <div class="text-success mb-2">●</div>
-            <h3 class="font-medium">Conversation health score</h3>
-            <p class="text-sm text-text-secondary mt-1">Quantifies if your AI was actually helpful not just responsive.</p>
+            <h3 class="font-medium">Health score</h3>
+            <p class="text-sm text-text-secondary mt-1">Per-conversation 0-100 score showing if users got what they needed.</p>
           </div>
           <div class="p-5 rounded-lg border border-border bg-surface/50">
             <div class="text-warning mb-2">●</div>
-            <h3 class="font-medium">Failure detection</h3>
+            <h3 class="font-medium">Problem detection</h3>
             <p class="text-sm text-text-secondary mt-1">Auto‑flags loops, nonsense, and frustration with links to conversations.</p>
+          </div>
+          <div class="p-5 rounded-lg border border-border bg-surface/50">
+            <div class="text-danger mb-2">●</div>
+            <h3 class="font-medium">Problem clustering</h3>
+            <p class="text-sm text-text-secondary mt-1">Groups failures by type and ranks by frequency so you know what to fix first.</p>
           </div>
           <div class="p-5 rounded-lg border border-border bg-surface/50">
             <div class="text-accent mb-2">●</div>
             <h3 class="font-medium">Usage patterns</h3>
-            <p class="text-sm text-text-secondary mt-1">Discover intents and trending topics to guide product decisions.</p>
+            <p class="text-sm text-text-secondary mt-1">Segments conversations by intent to see which use cases are broken.</p>
           </div>
         </div>
+      </div>
+    </section>
+
+    <!-- How It Works -->
+    <section class="px-6 py-20 md:py-28 border-t border-border/60">
+      <div class="max-w-7xl mx-auto">
+        <h2 class="text-4xl font-bold mb-3 tracking-tight">How It Works</h2>
+        <p class="text-lg text-text-secondary mb-16">From SDK to insights in 3 steps</p>
+        <div class="grid md:grid-cols-3 gap-8">
+          <div class="text-center">
+            <div class="w-12 h-12 rounded-full bg-accent/20 flex items-center justify-center text-accent font-bold text-lg mx-auto mb-4">1</div>
+            <h3 class="font-medium mb-2">SDK captures conversations</h3>
+            <p class="text-sm text-text-secondary">Wrap your AI calls with our SDK. Tracks messages, metadata, and user interactions automatically.</p>
+          </div>
+          <div class="text-center">
+            <div class="w-12 h-12 rounded-full bg-accent/20 flex items-center justify-center text-accent font-bold text-lg mx-auto mb-4">2</div>
+            <h3 class="font-medium mb-2">AI detects and clusters problems</h3>
+            <p class="text-sm text-text-secondary">Our system automatically flags failures, groups them by type, and ranks by frequency.</p>
+          </div>
+          <div class="text-center">
+            <div class="w-12 h-12 rounded-full bg-accent/20 flex items-center justify-center text-accent font-bold text-lg mx-auto mb-4">3</div>
+            <h3 class="font-medium mb-2">Dashboard shows what to fix</h3>
+            <p class="text-sm text-text-secondary">See your top problems with example traces. Know exactly what to prioritize and how to fix it.</p>
+          </div>
+        </div>
+        <!-- <div class="mt-12 p-6 rounded-xl bg-surface/60 border border-border text-center">
+          <p class="text-sm text-text-secondary">
+            <strong class="text-text">Monday morning workflow:</strong> Open dashboard → See "Handoff issues: 13 instances" → Click through to review 5 example traces → Bring to engineering with specific examples
+          </p>
+          <p class="text-xs text-text-secondary mt-2">Time: 5 minutes. No eval writing, no trace querying.</p>
+        </div> -->
       </div>
     </section>
 
@@ -237,6 +275,39 @@ await sensei.track({
     </section>
 
     <!-- Screens -->
+
+    <!-- FAQ -->
+    <section class="px-6 py-16 md:py-20 border-t border-border/60">
+      <div class="max-w-4xl mx-auto">
+        <h2 class="text-3xl font-bold mb-12 text-center">Frequently Asked Questions</h2>
+        <div class="space-y-8">
+          <div>
+            <h3 class="font-medium text-lg mb-2">How is this different from Langfuse or Arize?</h3>
+            <p class="text-text-secondary">Langfuse and Arize give you infrastructure to run evals and view traces. We give you insights - automatically detecting what's broken and clustering problems by frequency so you know what to fix first.</p>
+          </div>
+          <div>
+            <h3 class="font-medium text-lg mb-2">Do I need to write custom evals?</h3>
+            <p class="text-text-secondary">No. We automatically detect common failure patterns like loops, nonsense responses, and user frustration. Our AI judges conversation quality without requiring custom evaluation code.</p>
+          </div>
+          <div>
+            <h3 class="font-medium text-lg mb-2">How does the SDK work?</h3>
+            <p class="text-text-secondary">Drop-in wrapper around your AI calls. One import, tracks conversations automatically. Retries, batching, and flush-on-unload built-in. Adds ~100ms overhead.</p>
+          </div>
+          <div>
+            <h3 class="font-medium text-lg mb-2">Can I see the actual conversations?</h3>
+            <p class="text-text-secondary">Yes. Every problem cluster links to example traces so you can verify our categorization and understand the specific failure patterns.</p>
+          </div>
+          <div>
+            <h3 class="font-medium text-lg mb-2">What's the pricing?</h3>
+            <p class="text-text-secondary">Free during early access. We'll announce pricing before general availability. Expect usage-based pricing similar to other developer tools.</p>
+          </div>
+          <div>
+            <h3 class="font-medium text-lg mb-2">When will it be available?</h3>
+            <p class="text-text-secondary">We're onboarding teams in batches during early access. Join the waitlist and we'll reach out within 1-2 weeks.</p>
+          </div>
+        </div>
+      </div>
+    </section>
 
     <!-- Waitlist placeholder -->
     <section id="waitlist" class="px-6 py-16 md:py-20 border-t border-border/60">
