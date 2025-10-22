@@ -2,6 +2,8 @@ import { HealthScoreCard } from "@/components/HealthScoreCard";
 import { HealthScoreTrend } from "@/components/HealthScoreTrend";
 import { AlertFeed } from "@/components/AlertFeed";
 import { PatternSparkline } from "@/components/PatternSparkline";
+import { useQuery } from "@tanstack/react-query";
+import { useLiveDataFlag } from "@/contexts/LiveDataContext";
 
 //todo: remove mock functionality
 const topPatterns = [
@@ -13,6 +15,18 @@ const topPatterns = [
 ];
 
 export default function OverviewPage() {
+  const { enabled } = useLiveDataFlag();
+  const { data: summary, isLoading, error } = useQuery({
+    queryKey: ["/api/v1/analytics/summary?timeframe=7d"],
+    enabled,
+  });
+
+  const live = enabled && summary && !isLoading && !error;
+  const s = (summary || {}) as any;
+  const healthTitle = live ? "Avg Health (7d)" : "Current Health Score";
+  const activeTitle = live ? "Active Conversations (7d)" : "Active Conversations";
+  const failuresTitle = live ? "Failures (7d)" : "Failures";
+
   return (
     <div className="space-y-6">
       <div>
@@ -24,19 +38,19 @@ export default function OverviewPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <HealthScoreCard
-          title="Current Health Score"
-          value={87}
+          title={healthTitle}
+          value={live ? s.health_score_avg_7d : 87}
           trend={{ value: 5.2, direction: "up" }}
           onClick={() => console.log('Health score clicked')}
         />
         <HealthScoreCard
-          title="Active Conversations"
-          value={234}
+          title={activeTitle}
+          value={live ? s.active_conversations : 234}
           trend={{ value: 12, direction: "up" }}
         />
         <HealthScoreCard
-          title="Failure Rate Today"
-          value="3.2%"
+          title={failuresTitle}
+          value={live ? s.failures_today : "3.2%"}
           trend={{ value: 0.8, direction: "down" }}
         />
         <HealthScoreCard

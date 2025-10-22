@@ -1,7 +1,10 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { useLiveDataFlag } from "@/contexts/LiveDataContext";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 
 interface FailureCard {
   id: string;
@@ -31,6 +34,50 @@ const columns = [
 export function FailureKanbanBoard() {
   const [cards, setCards] = useState(initialCards);
   const [draggedCard, setDraggedCard] = useState<string | null>(null);
+  const { enabled } = useLiveDataFlag();
+  const qc = useQueryClient();
+
+  // Live: fetch board when enabled
+  type BoardResponse = Record<"loop" | "frustration" | "nonsense" | "abrupt_end", Array<{ id: string; conversation_id: string; type: string; detected_at: string; status: string }>>;
+  const { data: board } = useQuery<BoardResponse>({
+    queryKey: ["/api/v1/failures/board"],
+    enabled,
+  });
+
+  // Live: map board to cards (no preview/healthScore available here)
+  const liveCards = useMemo<FailureCard[]>(() => {
+    if (!enabled || !board) return initialCards;
+    const mapCol = (k: keyof BoardResponse): FailureCard["category"] =>
+      k === "loop" ? "loops" : k === "abrupt_end" ? "abrupt" : (k as any);
+    const rows: FailureCard[] = [];
+    (Object.keys(board) as Array<keyof BoardResponse>).forEach((k) => {
+      const col = mapCol(k);
+      for (const item of board[k] || []) {
+        rows.push({
+          id: item.id,
+          conversationId: item.conversation_id,
+          healthScore: 0,
+          preview: item.type,
+          category: col,
+        });
+      }
+    });
+    return rows;
+  }, [enabled, board]);
+
+  useEffect(() => {
+    if (enabled) setCards(liveCards);
+  }, [enabled, liveCards]);
+
+  // Live: resolve mutation
+  const resolveMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await apiRequest("PATCH", `/api/v1/failures/${id}`, { status: "resolved" });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/v1/failures/board"] });
+    },
+  });
 
   const handleDragStart = (cardId: string) => {
     setDraggedCard(cardId);
@@ -42,16 +89,21 @@ export function FailureKanbanBoard() {
 
   const handleDrop = (category: FailureCard["category"]) => {
     if (!draggedCard) return;
-
-    setCards(cards.map(card =>
-      card.id === draggedCard ? { ...card, category } : card
-    ));
+    if (enabled) {
+      // Only allow resolve in live mode; other category moves are not supported by API
+      if (category === "resolved") {
+        resolveMutation.mutate(draggedCard);
+        setCards((prev) => prev.map((c) => (c.id === draggedCard ? { ...c, category: "resolved" } : c)));
+      }
+    } else {
+      setCards(cards.map((card) => (card.id === draggedCard ? { ...card, category } : card)));
+    }
     setDraggedCard(null);
     console.log(`Moved card to ${category}`);
   };
 
   const getColumnCards = (columnId: FailureCard["category"]) => {
-    return cards.filter(card => card.category === columnId);
+    return cards.filter((card) => card.category === columnId);
   };
 
   return (

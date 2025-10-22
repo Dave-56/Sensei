@@ -2,6 +2,8 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { useLiveDataFlag } from "@/contexts/LiveDataContext";
+import { useQuery } from "@tanstack/react-query";
 
 interface Alert {
   id: string;
@@ -27,6 +29,22 @@ const typeConfig = {
 };
 
 export function AlertFeed() {
+  const { enabled } = useLiveDataFlag();
+  const { data } = useQuery<{ items: Array<{ id: string; conversation_id: string; type: "loop" | "frustration" | "nonsense" | "abrupt_end"; detected_at: string; status: string }> }>({
+    queryKey: ["/api/v1/failures?page=1&page_size=10"],
+    enabled,
+  });
+
+  const items: Alert[] = (enabled && data?.items
+    ? data.items.map((f) => ({
+        id: f.id,
+        conversationId: f.conversation_id,
+        type: f.type === "abrupt_end" ? "abrupt" : (f.type as Alert["type"]),
+        timestamp: new Date(f.detected_at),
+        preview: f.type,
+      }))
+    : mockAlerts);
+
   return (
     <Card className="p-6">
       <div className="flex items-center gap-2 mb-4">
@@ -34,7 +52,7 @@ export function AlertFeed() {
         <h3 className="text-lg font-semibold">Recent Failures</h3>
       </div>
       <div className="space-y-3">
-        {mockAlerts.map((alert) => (
+        {items.map((alert) => (
           <button
             key={alert.id}
             className="w-full text-left p-3 rounded-md hover-elevate border border-transparent transition-all"

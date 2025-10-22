@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,9 +14,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Download, Search } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
+import { useLiveDataFlag } from "@/contexts/LiveDataContext";
+import { useQuery } from "@tanstack/react-query";
 
-interface Conversation {
-  id: string;
+interface ConversationRow {
+  id: string; // internal UUID used for actions
+  displayId: string; // shown in UI (external_id or id)
   healthScore: number;
   duration: string;
   status: "active" | "completed" | "failed";
@@ -25,7 +28,7 @@ interface Conversation {
 }
 
 //todo: remove mock functionality
-const mockConversations: Conversation[] = [
+const mockConversations: ConversationRow[] = [
   { id: "C-4521", healthScore: 92, duration: "5m 32s", status: "completed", timestamp: new Date(Date.now() - 1000 * 60 * 5), hasFailures: false },
   { id: "C-4520", healthScore: 45, duration: "12m 15s", status: "failed", timestamp: new Date(Date.now() - 1000 * 60 * 15), hasFailures: true },
   { id: "C-4519", healthScore: 88, duration: "3m 45s", status: "completed", timestamp: new Date(Date.now() - 1000 * 60 * 22), hasFailures: false },
@@ -36,6 +39,43 @@ const mockConversations: Conversation[] = [
 export function ConversationsTable({ onRowClick }: { onRowClick?: (id: string) => void }) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState("");
+  const { enabled } = useLiveDataFlag();
+
+  // Helper to format seconds into a short human-readable duration
+  const formatDuration = (seconds: number) => {
+    if (!Number.isFinite(seconds) || seconds < 0) return "-";
+    const m = Math.floor(seconds / 60);
+    const s = Math.floor(seconds % 60);
+    if (m >= 60) {
+      const h = Math.floor(m / 60);
+      const mm = m % 60;
+      return `${h}h ${mm}m`;
+    }
+    return `${m}m ${s}s`;
+  };
+
+  // Fetch live conversations when toggle is ON
+  const { data: apiData } = useQuery<{ items: Array<{ id: string; external_id: string | null; health_score: number | null; status: string; updated_at: string; duration_seconds: number }>; total: number }>(
+    {
+      queryKey: ["/api/v1/conversations?page=1&page_size=20"],
+      enabled,
+    },
+  );
+
+  const rows: ConversationRow[] = useMemo(() => {
+    if (enabled && apiData?.items) {
+      return apiData.items.map((it) => ({
+        id: it.id,
+        displayId: it.external_id || it.id,
+        healthScore: (it.health_score ?? 0) as number,
+        duration: formatDuration(it.duration_seconds ?? 0),
+        status: (it.status as ConversationRow["status"]) || "completed",
+        timestamp: new Date(it.updated_at),
+        hasFailures: false,
+      }));
+    }
+    return mockConversations.map((m) => ({ ...m, displayId: m.id }));
+  }, [enabled, apiData]);
 
   const getHealthColor = (score: number) => {
     if (score >= 85) return "text-health-excellent";
@@ -62,10 +102,10 @@ export function ConversationsTable({ onRowClick }: { onRowClick?: (id: string) =
   };
 
   const toggleSelectAll = () => {
-    if (selected.size === mockConversations.length) {
+    if (selected.size === rows.length) {
       setSelected(new Set());
     } else {
-      setSelected(new Set(mockConversations.map((c) => c.id)));
+      setSelected(new Set(rows.map((c) => c.id)));
     }
   };
 
@@ -121,7 +161,11 @@ export function ConversationsTable({ onRowClick }: { onRowClick?: (id: string) =
             </tr>
           </thead>
           <tbody>
-            {mockConversations.map((conv) => (
+            {rows
+              .filter((conv) =>
+                searchQuery.trim() ? conv.displayId.toLowerCase().includes(searchQuery.trim().toLowerCase()) : true,
+              )
+              .map((conv) => (
               <tr
                 key={conv.id}
                 className="border-b last:border-b-0 hover-elevate cursor-pointer transition-all"
@@ -135,7 +179,7 @@ export function ConversationsTable({ onRowClick }: { onRowClick?: (id: string) =
                     data-testid={`checkbox-${conv.id}`}
                   />
                 </td>
-                <td className="p-3 font-mono text-sm font-medium">{conv.id}</td>
+                <td className="p-3 font-mono text-sm font-medium">{conv.displayId}</td>
                 <td className="p-3">
                   <Badge variant="outline" className={getHealthBadgeColor(conv.healthScore)}>
                     <span className={cn("font-semibold", getHealthColor(conv.healthScore))}>

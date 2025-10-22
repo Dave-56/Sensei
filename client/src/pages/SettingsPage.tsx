@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -11,12 +11,90 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { FaGithub } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
+import { useLiveDataFlag } from "@/contexts/LiveDataContext";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { useAuth } from "@/contexts/AuthContext";
 
 // single-user MVP: no teams/members
 
 export default function SettingsPage() {
+  const { enabled: live } = useLiveDataFlag();
+  const qc = useQueryClient();
+  const { user } = useAuth();
   const [slackEnabled, setSlackEnabled] = useState(true);
   const [emailAlerts, setEmailAlerts] = useState(true);
+  const [webhookUrl, setWebhookUrl] = useState("");
+  const [healthThreshold, setHealthThreshold] = useState<number>(50);
+  const [failureRate, setFailureRate] = useState<number>(5);
+  const [newKeyName, setNewKeyName] = useState("");
+  const [lastCreatedSecret, setLastCreatedSecret] = useState<string | null>(null);
+
+  // Load settings
+  const settingsQuery = useQuery<{ id: number; slack_webhook_url: string | null; alert_thresholds: any; updated_at: string | null }>(
+    {
+      queryKey: ["/api/v1/settings"],
+      enabled: live,
+    },
+  );
+
+  useEffect(() => {
+    if (live && settingsQuery.data) {
+      const s = settingsQuery.data;
+      setWebhookUrl(s.slack_webhook_url || "");
+      setSlackEnabled(!!s.slack_webhook_url);
+      const t = (s.alert_thresholds || {}) as { low_health?: number; failure_rate?: number; email_alerts?: boolean };
+      if (typeof t.low_health === "number") setHealthThreshold(t.low_health);
+      if (typeof t.failure_rate === "number") setFailureRate(t.failure_rate);
+      if (typeof t.email_alerts === "boolean") setEmailAlerts(t.email_alerts);
+    }
+  }, [live, settingsQuery.data]);
+
+  const saveSettingsMutation = useMutation({
+    mutationFn: async () => {
+      const body = {
+        slack_webhook_url: slackEnabled && webhookUrl ? webhookUrl : null,
+        alert_thresholds: {
+          low_health: healthThreshold,
+          failure_rate: failureRate,
+          email_alerts: emailAlerts,
+        },
+      };
+      const res = await apiRequest("PUT", "/api/v1/settings", body);
+      return await res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/v1/settings"] });
+    },
+  });
+
+  // API keys
+  type ApiKey = { id: string; name: string | null; prefix: string; created_at: string; last_used_at: string | null; revoked_at: string | null };
+  const keysQuery = useQuery<ApiKey[]>({
+    queryKey: ["/api/v1/api-keys"],
+    enabled: live,
+  });
+
+  const createKeyMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/v1/api-keys", { name: newKeyName || "New Key" });
+      return await res.json();
+    },
+    onSuccess: (data: any) => {
+      setLastCreatedSecret(data.api_key as string);
+      setNewKeyName("");
+      qc.invalidateQueries({ queryKey: ["/api/v1/api-keys"] });
+    },
+  });
+
+  const revokeKeyMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await apiRequest("DELETE", `/api/v1/api-keys/${id}`);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/v1/api-keys"] });
+    },
+  });
 
   return (
     <div className="space-y-6">
@@ -48,38 +126,65 @@ export default function SettingsPage() {
         </TabsList>
 
         <TabsContent value="api-keys">
-          <Card className="p-6">
-            <h3 className="text-lg font-semibold mb-4">API Keys</h3>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="production-key">Production Key</Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="production-key"
-                    type="password"
-                    value="sk_prod_••••••••••••••••"
-                    readOnly
-                    className="font-mono"
-                    data-testid="input-production-key"
-                  />
-                  <Button variant="outline" data-testid="button-reveal-key">Reveal</Button>
-                </div>
+          <Card className="p-6 space-y-4">
+            <h3 className="text-lg font-semibold">API Keys</h3>
+            <p className="text-sm text-muted-foreground">Create and manage keys. Existing keys are hashed — only new keys reveal a one-time secret.</p>
+            <div className="flex items-end gap-2">
+              <div className="flex-1 space-y-2">
+                <Label htmlFor="new-key-name">Key Name</Label>
+                <Input id="new-key-name" placeholder="e.g. Production" value={newKeyName} onChange={(e) => setNewKeyName(e.target.value)} data-testid="input-new-key-name" />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="test-key">Test Key</Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="test-key"
-                    type="password"
-                    value="sk_test_••••••••••••••••"
-                    readOnly
-                    className="font-mono"
-                    data-testid="input-test-key"
-                  />
-                  <Button variant="outline" data-testid="button-regenerate-key">Regenerate</Button>
-                </div>
+              <Button onClick={() => createKeyMutation.mutate()} disabled={!live} data-testid="button-create-key">Create Key</Button>
+            </div>
+            {lastCreatedSecret && (
+              <div className="p-3 rounded-md border bg-muted/40">
+                <div className="text-xs text-muted-foreground mb-1">Copy and store this key now. You won’t be able to view it again.</div>
+                <code className="text-sm font-mono break-all">{lastCreatedSecret}</code>
               </div>
-              <Button data-testid="button-create-key">Create New Key</Button>
+            )}
+            <div className="space-y-2">
+              <div className="text-sm font-medium">Existing Keys</div>
+              <div className="rounded-md border">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b bg-muted/30">
+                      <th className="text-left p-2">Name</th>
+                      <th className="text-left p-2">Prefix</th>
+                      <th className="text-left p-2">Created</th>
+                      <th className="text-left p-2">Last Used</th>
+                      <th className="text-left p-2">Status</th>
+                      <th className="text-right p-2">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(live ? keysQuery.data || [] : []).map((k) => (
+                      <tr key={k.id} className="border-b last:border-b-0">
+                        <td className="p-2">{k.name || "—"}</td>
+                        <td className="p-2 font-mono">{k.prefix}</td>
+                        <td className="p-2">{new Date(k.created_at).toLocaleString()}</td>
+                        <td className="p-2">{k.last_used_at ? new Date(k.last_used_at).toLocaleString() : "—"}</td>
+                        <td className="p-2">{k.revoked_at ? <Badge variant="secondary">Revoked</Badge> : <Badge>Active</Badge>}</td>
+                        <td className="p-2 text-right">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={!!k.revoked_at || !live}
+                            onClick={() => revokeKeyMutation.mutate(k.id)}
+                            data-testid={`button-revoke-${k.id}`}
+                          >
+                            Revoke
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                    {!live && (
+                      <tr>
+                        <td className="p-2 text-muted-foreground" colSpan={6}>Enable Live Data to view keys</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </Card>
         </TabsContent>
@@ -93,22 +198,13 @@ export default function SettingsPage() {
                   Send alerts to your Slack workspace
                 </p>
               </div>
-              <Switch
-                checked={slackEnabled}
-                onCheckedChange={setSlackEnabled}
-                data-testid="switch-slack-enabled"
-              />
+              <Switch checked={slackEnabled} onCheckedChange={setSlackEnabled} data-testid="switch-slack-enabled" />
             </div>
             {slackEnabled && (
               <div className="space-y-4 pt-4 border-t">
                 <div className="space-y-2">
                   <Label htmlFor="webhook-url">Webhook URL</Label>
-                  <Input
-                    id="webhook-url"
-                    placeholder="https://hooks.slack.com/services/..."
-                    className="font-mono text-sm"
-                    data-testid="input-webhook-url"
-                  />
+                  <Input id="webhook-url" placeholder="https://hooks.slack.com/services/..." className="font-mono text-sm" value={webhookUrl} onChange={(e) => setWebhookUrl(e.target.value)} data-testid="input-webhook-url" />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="channel">Channel</Label>
@@ -118,7 +214,10 @@ export default function SettingsPage() {
                     data-testid="input-channel"
                   />
                 </div>
-                <Button data-testid="button-test-connection">Test Connection</Button>
+                <div className="flex gap-2">
+                  <Button variant="outline" disabled title="Coming soon" data-testid="button-test-connection">Test Connection</Button>
+                  <Button onClick={() => saveSettingsMutation.mutate()} disabled={!live} data-testid="button-save-slack">Save</Button>
+                </div>
               </div>
             )}
           </Card>
@@ -145,30 +244,15 @@ export default function SettingsPage() {
                 <Label htmlFor="health-threshold">
                   Health Score Threshold (trigger alert when below)
                 </Label>
-                <Input
-                  id="health-threshold"
-                  type="number"
-                  defaultValue="50"
-                  min="0"
-                  max="100"
-                  data-testid="input-health-threshold"
-                />
+                <Input id="health-threshold" type="number" value={healthThreshold} onChange={(e) => setHealthThreshold(Number(e.target.value))} min="0" max="100" data-testid="input-health-threshold" />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="failure-rate">
                   Failure Rate Threshold (%) (trigger alert when above)
                 </Label>
-                <Input
-                  id="failure-rate"
-                  type="number"
-                  defaultValue="5"
-                  min="0"
-                  max="100"
-                  step="0.1"
-                  data-testid="input-failure-rate"
-                />
+                <Input id="failure-rate" type="number" value={failureRate} onChange={(e) => setFailureRate(Number(e.target.value))} min="0" max="100" step="0.1" data-testid="input-failure-rate" />
               </div>
-              <Button data-testid="button-save-thresholds">Save Thresholds</Button>
+              <Button onClick={() => saveSettingsMutation.mutate()} disabled={!live} data-testid="button-save-thresholds">Save Thresholds</Button>
             </div>
           </Card>
         </TabsContent>
@@ -184,18 +268,24 @@ export default function SettingsPage() {
               </div>
               <div className="flex items-center gap-4">
                 <Avatar className="h-10 w-10">
-                  <AvatarFallback>AD</AvatarFallback>
+                  <AvatarFallback>
+                    {(user?.user_metadata?.full_name
+                      ? user.user_metadata.full_name.split(" ").map((n) => n[0]).join("").toUpperCase()
+                      : user?.email?.[0]?.toUpperCase()) || "U"}
+                  </AvatarFallback>
                 </Avatar>
                 <div className="space-y-1">
-                  <p className="text-sm font-medium">admin@example.com</p>
-                  <p className="text-xs text-muted-foreground">Provider: Email (verified)</p>
+                  <p className="text-sm font-medium">{user?.email || "—"}</p>
+                  {user?.user_metadata?.full_name && (
+                    <p className="text-xs text-muted-foreground">{user.user_metadata.full_name}</p>
+                  )}
                 </div>
               </div>
               <div className="flex gap-2">
                 <Button disabled title="Coming soon" data-testid="button-change-email">Change Email</Button>
                 <Button variant="outline" disabled title="Coming soon" data-testid="button-change-password">Change Password</Button>
               </div>
-              <div className="text-xs text-muted-foreground">Last login: 2 hours ago • IP 203.0.113.5</div>
+              <div className="text-xs text-muted-foreground">Signed in via Supabase</div>
             </Card>
 
             <Card className="p-6 space-y-4">

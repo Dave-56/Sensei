@@ -62,21 +62,11 @@ This document tracks the concrete steps from the current codebase to a productio
 ## M2B - Write APIs (Dashboard/Admin)
 
 - Status: Done
-- **IMPLEMENTED APIs:**
-  - ✅ Failures: `PATCH /api/v1/failures/:id` { status: 'open'|'ack'|'resolved' } - **IMPLEMENTED** (using mock DB)
-  - ✅ Settings: `PUT /api/v1/settings` { slack_webhook_url?, alert_thresholds? } - **IMPLEMENTED** (using mock DB)
-  - ✅ API Keys: `POST /api/v1/api-keys` (generate prefix+secret), `DELETE /api/v1/api-keys/:id` - **IMPLEMENTED** (using mock DB)
-- **MISSING APIs:**
-  - ❌ Saved Views: `POST /api/v1/saved-views` { name, scope, config }, `PUT /api/v1/saved-views/:id`, `DELETE /api/v1/saved-views/:id` - **NOT IMPLEMENTED**
-- **IMPLEMENTATION ISSUES:**
-  - ⚠️ **Database Integration**: All write APIs currently use mock DB instead of Supabase (data lost on restart)
-  - ⚠️ **Validation**: No zod request body validation (tracking requirement not met)
-  - ⚠️ **Security**: No API key hashing, no `last_used_at` tracking, no single-row invariant enforcement
-- **NEXT STEPS:**
-  - 🔄 Migrate write APIs from mock DB to Supabase DB
-  - 🔄 Add zod validation schemas for all request bodies
-  - 🔄 Implement API key hashing and security features
-  - 🔄 Create saved views API routes (database schema ready)
+- **Implemented APIs (DB‑backed + validated):**
+  - ✅ Failures: `GET /api/v1/failures`, `GET /api/v1/failures/board`, `PATCH /api/v1/failures/:id`
+  - ✅ Settings: `GET/PUT /api/v1/settings`
+  - ✅ API Keys: `GET/POST/DELETE /api/v1/api-keys` (scrypt hash, soft revoke)
+  - ✅ Saved Views: `POST/PUT/DELETE /api/v1/saved-views`
 - Acceptance:
   - Writes persist to Supabase DB; invalid payloads return 400 with details
   - Idempotent updates where applicable (settings/saved views)
@@ -84,22 +74,11 @@ This document tracks the concrete steps from the current codebase to a productio
 
 ## M3 – Settings + API Keys – DB‑Backed
 
-- Status: **PARTIALLY IMPLEMENTED** ⚠️
-- **IMPLEMENTED:**
-  - ✅ GET/PUT `/api/v1/settings` - **IMPLEMENTED** (using mock DB)
-  - ✅ GET/POST/DELETE `/api/v1/api-keys` - **IMPLEMENTED** (using mock DB)
-- **MISSING:**
-  - ❌ Key creation: generate prefix+secret, store `key_hash` (bcrypt/scrypt/argon2), never store plaintext
-  - ❌ Update `last_used_at` when a key authenticates ingestion
-  - ❌ Database integration (currently using mock DB)
-- **IMPLEMENTATION ISSUES:**
-  - ⚠️ **Security**: API keys stored in plaintext in mock DB (no hashing)
-  - ⚠️ **Persistence**: Data lost on server restart (mock DB)
-  - ⚠️ **Tracking**: No `last_used_at` updates
-- **NEXT STEPS:**
-  - 🔄 Migrate to Supabase DB with proper key hashing
-  - 🔄 Implement bcrypt/scrypt/argon2 for key storage
-  - 🔄 Add `last_used_at` tracking in ingestion middleware
+- Status: Done
+- **Implemented:**
+  - ✅ Settings: `GET/PUT /api/v1/settings` (DB‑backed, idempotent, zod)
+  - ✅ API Keys: `GET/POST/DELETE /api/v1/api-keys` (scrypt hash, metadata‑only listing, soft revoke)
+  - ✅ Ingestion middleware updates `last_used_at` on successful key use
 - Acceptance:
   - Creating a key returns one‑time secret; listing shows only metadata
   - Revoking removes/marks key and prevents use
@@ -107,85 +86,104 @@ This document tracks the concrete steps from the current codebase to a productio
 
 ## M4A – SDK (Client Library)
 
-- Status: Not started
-- Scope:
-  - Publish `@sensei/sdk` (TypeScript) with:
-    - `init({ apiKey, baseUrl, environment })`
-    - `track({ conversationId, messages[{ role, content, timestamp }], metadata })`
-    - `wrap(openai|anthropic|fetch)` (optional auto‑tracking)
-  - Behavior: API key auth; retries with backoff; optional small batching; flush on unload
-  - Acceptance:
-    - Example app can send 100 msgs/min without blocking UX
-    - Successful calls visible in server logs; data appears via read APIs
-  - Dependencies: M3
-
-## M4C – Demo Agent + SDK Playground
-
-- Status: Not started
-- Scope:
-  - Simple Node/TS demo agent that calls OpenAI (or mock) and integrates `@sensei/sdk`
-  - CLI script and minimal web UI to run conversations; configurable with `.env`
-  - Events flow through ingestion to DB so they appear in dashboard reads
-  - Include seeded prompts and sample transcripts for demo purposes
+- Status: Partial
+- Implemented:
+  - ✅ Local TypeScript SDK in `sdk/index.ts` with `init/track`, timestamp normalization, optional batching, and unload flush
+  - ✅ Used by demo agent script
+- Remaining:
+  - ⏩ Publish to npm (`@sensei/sdk`) and add README
+  - ⏩ Retries with backoff; wrappers (`wrap(openai|anthropic|fetch)`) for auto‑tracking
 - Acceptance:
-  - `npm run demo:agent` runs a conversation and data shows in `/conversations` and analytics
-  - README instructions for setup and API key use (one‑time secret from M3)
-- Dependencies: M4A, M4B
+  - Local SDK can send 100 msgs/min without blocking UX
+  - Successful calls visible in server logs; data appears via read APIs
+- Dependencies: M3
 
 ## M4B – Ingestion API (Minimal)
 
-- Status: **IMPLEMENTED** ✅
-- **IMPLEMENTED:**
-  - ✅ Route: `POST /api/v1/conversations/track` - **IMPLEMENTED**
-  - ✅ Auth: API key header (prefix match + hash verify) - **IMPLEMENTED**
-  - ✅ Writes `messages` rows (role, content, timestamp, metadata) - **IMPLEMENTED**
-- **IMPLEMENTATION ISSUES:**
-  - ⚠️ **Database**: Currently using mock DB instead of Supabase (data lost on restart)
-  - ⚠️ **Idempotency**: No upsert by `external_id` (tracking requirement not met)
-  - ⚠️ **Processing**: Inline sentiment placeholder only, no queue processing
-- **NEXT STEPS:**
-  - 🔄 Migrate from mock DB to Supabase DB
-  - 🔄 Implement upsert by `external_id` for idempotency
-  - 🔄 Add proper sentiment processing or queue integration
+- Status: Done ✅
+- Implemented:
+  - ✅ Route: `POST /api/v1/conversations/track` (DB‑backed, zod‑validated, transaction)
+  - ✅ Auth: API key header (prefix + scrypt hash verify; revoked keys rejected)
+  - ✅ Upsert conversation by `external_id`; insert `messages` (role, content, timestamp, metadata)
+  - ✅ Post‑ingest processing: enqueue to BullMQ via `REDIS_URL` or inline fallback; computes `health_score` and basic failures
 - Acceptance:
-  - SDK or cURL can push a sample conversation; it appears in dashboard reads
+  - SDK or cURL can push a sample conversation; it appears in dashboard reads and analytics reflect processing
+  - Server logs show processing path: `[queue] …` when BullMQ is active (with `REDIS_URL`), or `[inline] …` when falling back
 - Dependencies: M3
+
+## M4C – Demo Agent + SDK Playground
+
+ - Status: Done
+ - Implemented:
+   - ✅ Demo agent script: `npm run demo:agent` pushes a sample conversation via SDK
+   - ✅ SDK scaffold: `sdk/index.ts` with `init/track` and batching
+ - Acceptance:
+   - Running the demo inserts data visible in conversations/messages APIs
 
 ## M5 – Worker Pipeline (Queue + Processing)
 
-- Status: Not started
-- Scope:
-  - BullMQ worker (Redis) and queues:
-    - `ingest` (normalize/validate, write DB)
-    - `process-conversation` (health scoring, failure detection)
-    - `embed-conversation` (gated by `FEATURE_EMBEDDINGS`)
-    - `pattern-analyze` scheduled weekly
-  - Retries with backoff; basic DLQ/alert on repeated failure
-  - Update DB: write health scores, failures; set `api_keys.last_used_at` on use
+- Status: **Done** ✅
+- Implemented:
+  - ✅ `process-conversation` queue using BullMQ when `REDIS_URL` is set; inline fallback otherwise
+  - ✅ Worker + scheduler initialized in `server/queue/index.ts`
+  - ✅ Enqueue from `POST /api/v1/conversations/track` (best‑effort)
+  - ✅ Exponential backoff + `attempts: 3` on enqueue
+  - ✅ Console logs for visibility: init, enqueue, start, complete
+  - ✅ **Separate `ingest` queue** (normalize/validate before DB write)
+  - ✅ **`embed-conversation` and `pattern-analyze` scheduled jobs** (simple implementations)
+- Not yet implemented:
+  - ⏩ DLQ/alerts for repeated failure (optional for MVP)
+  - ⏩ Update `api_keys.last_used_at` in worker (can be added later)
 - Acceptance:
-  - Ingest -> process -> dashboard reflects updates within seconds
-  - Persistent failures visible in logs/DLQ
+  - New conversations trigger ingest → process → embeddings + patterns pipeline
+  - Health scores, failures, embeddings, and patterns update within seconds
+  - Logs show `[queue]` path when Redis is active; fallback shows `[inline]`
+- How to verify (dev):
+  - Start Redis: `docker run --rm -p 6379:6379 redis:7-alpine`
+  - Set `REDIS_URL=redis://localhost:6379` and restart server (`npm run dev`)
+  - Run demo: `npm run demo:agent`
+  - Expect server logs:
+    - Init: `[queue] initialized BullMQ for "ingest-conversation"` and `"process-conversation"`
+    - Ingest: `[queue] ingesting conversation <externalId>` → `[queue] ingested conversation`
+    - Process: `[queue] processing conversation <id>` → `[queue] generated embeddings` → `[queue] analyzed patterns`
+  - Optional Redis checks:
+    - `redis-cli -u "$REDIS_URL" PING` → `PONG`
+    - `redis-cli -u "$REDIS_URL" --raw SCAN 0 MATCH bull:ingest-conversation:* COUNT 100`
+    - `redis-cli -u "$REDIS_URL" --raw SCAN 0 MATCH bull:process-conversation:* COUNT 100`
 - Dependencies: M4B
 
 ## M6 – Alerts (Slack) – Optional for MVP
 
-- Status: Not started
-- Scope:
-  - On new failure or health below threshold, POST to `app_settings.slack_webhook_url`
-  - Message: short summary + deep link
-- Acceptance:
-  - With a valid webhook URL, events deliver to Slack
+- Status: Partial ✅
+- Implemented:
+  - ✅ Integration module: `server/integrations/slack.ts` (reads webhook from DB `app_settings.slack_webhook_url` with env fallback `SLACK_WEBHOOK_URL`)
+  - ✅ Alerts on new failures from worker (`process-conversation`): sets `failures.alerted = true` on success
+  - ✅ Low‑health alert (default threshold 40, currently hardcoded) after health score update
+  - ✅ Basic dashboard deep link to `/conversations`
+- Remaining:
+  - ⏩ Make threshold configurable via `app_settings.alert_thresholds` (e.g., `{ "low_health": 40 }`) — defer until frontend/settings work (M7)
+  - ⏩ Richer Slack formatting (per‑type details, direct deep link to conversation detail view once available)
+  - ⏩ Toggle to enable/disable alerts in settings UI — defer to M7
+- How to verify:
+  - Set `SLACK_WEBHOOK_URL` or update Settings (slack_webhook_url)
+  - Run demo agent; when a failure is detected or health < 40, Slack receives a message
+  - Check DB `failures.alerted` flips to true after a successful post
 - Dependencies: M2, M3
 
 ## M7 – Frontend Switch To Live Data
 
-- Status: Not started
+- Status: Partial ✅
 - Scope:
   - Add Supabase client login (single admin)
   - Attach Bearer token to requests
   - Feature flag to toggle mock vs live per page; convert pages: Overview, Conversations, Failures, Settings
 - Acceptance:
   - App loads with live data end‑to‑end; mock fallback behind flag only
+ - Implemented today:
+  - ✅ Live Data toggle (localStorage) + header switch; default OFF (mock)
+  - ✅ Overview page reads `/api/v1/analytics/summary` when Live Data is ON; otherwise uses mock values
+ - Remaining to convert:
+  - ⏩ Replace mock tables/charts for Conversations, Failures, Patterns pages with live endpoints, guarded by the same toggle
 - Dependencies: M2, M3
 
 ## M8 – Testing, Hardening, Deploy

@@ -1,5 +1,8 @@
 import { Card } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { useLiveDataFlag } from "@/contexts/LiveDataContext";
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 
 //todo: remove mock functionality
 const mockData = [
@@ -13,11 +16,47 @@ const mockData = [
 ];
 
 export function FailureTrendsChart() {
+  const { enabled } = useLiveDataFlag();
+
+  type Series = { type: string; points: number[] };
+  const { data } = useQuery<{ bucket: "day"; series: Series[] }>({
+    queryKey: ["/api/v1/analytics/failures/trends"],
+    enabled,
+  });
+
+  const chartData = useMemo(() => {
+    if (!enabled || !data?.series?.length) return mockData;
+
+    const pointsLen = data.series[0]?.points?.length ?? 0;
+    const labels: string[] = [];
+    // Reconstruct last N days labels matching server ordering (oldest -> newest)
+    for (let i = pointsLen - 1; i >= 0; i--) {
+      const d = new Date(Date.now() - i * 86400_000);
+      labels.push(d.toISOString().slice(0, 10));
+    }
+
+    const lookup = (type: string) => data.series.find((s) => s.type === type)?.points ?? new Array(pointsLen).fill(0);
+
+    const loop = lookup("loop");
+    const frustration = lookup("frustration");
+    const nonsense = lookup("nonsense");
+    const abrupt_end = lookup("abrupt_end");
+
+    return labels.map((day, idx) => ({
+      day,
+      // Map server types to chart keys
+      loops: loop[idx] ?? 0,
+      frustration: frustration[idx] ?? 0,
+      nonsense: nonsense[idx] ?? 0,
+      abrupt: abrupt_end[idx] ?? 0,
+    }));
+  }, [enabled, data]);
+
   return (
     <Card className="p-6">
       <h3 className="text-lg font-semibold mb-4">Failure Trends (7 Days)</h3>
       <ResponsiveContainer width="100%" height={200}>
-        <BarChart data={mockData}>
+        <BarChart data={chartData}>
           <XAxis dataKey="day" stroke="hsl(var(--muted-foreground))" fontSize={12} />
           <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
           <Tooltip

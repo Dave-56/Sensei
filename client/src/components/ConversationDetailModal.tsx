@@ -5,6 +5,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { AlertTriangle, User, Bot } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useLiveDataFlag } from "@/contexts/LiveDataContext";
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 
 interface Message {
   id: string;
@@ -52,7 +55,18 @@ export function ConversationDetailModal({
 }: ConversationDetailModalProps) {
   if (!conversationId) return null;
 
-  const healthScore = 45;
+  const { enabled } = useLiveDataFlag();
+  const isUUID = (v: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v);
+
+  // Live data queries (guarded by toggle and valid UUID)
+  const messagesQuery = useQuery<Array<{ id: string; role: "user" | "ai"; content: string; timestamp: string; sentiment_score: number | null }>>({
+    queryKey: ["/api/v1/conversations", conversationId, "messages"],
+    enabled: enabled && isUUID(conversationId),
+  });
+  const healthQuery = useQuery<{ score: number; breakdown: { completion: number; sentiment: number; clarifications: number; bonuses: number } }>({
+    queryKey: ["/api/v1/conversations", conversationId, "health"],
+    enabled: enabled && isUUID(conversationId),
+  });
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -61,7 +75,7 @@ export function ConversationDetailModal({
           <DialogTitle className="flex items-center gap-3">
             <span className="font-mono text-lg">{conversationId}</span>
             <Badge variant="outline" className="bg-health-critical/20 text-health-critical border-health-critical/40">
-              Health: {healthScore}
+              Health: {enabled && isUUID(conversationId) && healthQuery.data ? Math.round(healthQuery.data.score) : 45}
             </Badge>
           </DialogTitle>
         </DialogHeader>
@@ -72,7 +86,16 @@ export function ConversationDetailModal({
               <h4 className="font-semibold mb-3">Message Thread</h4>
               <ScrollArea className="h-[300px] pr-4">
                 <div className="space-y-3">
-                  {mockMessages.map((message) => (
+                  {(enabled && isUUID(conversationId) && messagesQuery.data
+                    ? messagesQuery.data.map((m, idx) => ({
+                        id: m.id,
+                        role: m.role,
+                        content: m.content,
+                        timestamp: new Date(m.timestamp),
+                        hasIssue: false,
+                      }))
+                    : mockMessages
+                  ).map((message) => (
                     <div
                       key={message.id}
                       className={cn(
@@ -104,8 +127,16 @@ export function ConversationDetailModal({
             <Card className="p-4">
               <h4 className="font-semibold mb-3">Sentiment Over Time</h4>
               <ResponsiveContainer width="100%" height={150}>
-                <LineChart data={mockSentimentData}>
-                  <XAxis dataKey="message" fontSize={11} />
+                <LineChart
+                  data={
+                    enabled && isUUID(conversationId) && messagesQuery.data
+                      ? messagesQuery.data
+                          .map((m, idx) => ({ index: idx + 1, sentiment: m.sentiment_score }))
+                          .filter((d) => typeof d.sentiment === "number") as Array<{ index: number; sentiment: number }>
+                      : mockSentimentData
+                  }
+                >
+                  <XAxis dataKey={enabled && isUUID(conversationId) && messagesQuery.data ? "index" : "message"} fontSize={11} />
                   <YAxis fontSize={11} domain={[0, 100]} />
                   <Tooltip />
                   <Line
@@ -125,19 +156,19 @@ export function ConversationDetailModal({
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Response Quality</span>
-                  <span className="font-medium">-20</span>
+                  <span className="font-medium">{enabled && isUUID(conversationId) && healthQuery.data ? healthQuery.data.breakdown.completion : -20}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Loop Detected</span>
-                  <span className="font-medium text-health-critical">-25</span>
+                  <span className="font-medium text-health-critical">{enabled && isUUID(conversationId) && healthQuery.data ? healthQuery.data.breakdown.clarifications : -25}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Sentiment Drop</span>
-                  <span className="font-medium">-10</span>
+                  <span className="font-medium">{enabled && isUUID(conversationId) && healthQuery.data ? healthQuery.data.breakdown.sentiment : -10}</span>
                 </div>
                 <div className="flex justify-between pt-2 border-t">
                   <span className="font-medium">Final Score</span>
-                  <span className="font-bold text-health-critical">{healthScore}</span>
+                  <span className="font-bold text-health-critical">{enabled && isUUID(conversationId) && healthQuery.data ? Math.round(healthQuery.data.score) : 45}</span>
                 </div>
               </div>
             </Card>

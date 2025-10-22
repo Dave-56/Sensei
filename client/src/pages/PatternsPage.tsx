@@ -8,6 +8,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Sparkles } from "lucide-react";
+import { useLiveDataFlag } from "@/contexts/LiveDataContext";
+import { useQuery } from "@tanstack/react-query";
 
 //todo: remove mock functionality
 const emergingPatterns = [
@@ -27,6 +29,19 @@ const allPatterns = [
 ];
 
 export default function PatternsPage() {
+  const { enabled } = useLiveDataFlag();
+  const { data } = useQuery<Array<{ id: string; pattern_name: string; occurrence_count: number }>>({
+    queryKey: ["/api/v1/analytics/patterns"],
+    enabled,
+  });
+
+  const livePatterns = (data || []).map((p) => ({
+    name: p.pattern_name,
+    example: "",
+    count: p.occurrence_count,
+    trend: "up" as const,
+  }));
+  const liveEmerging = livePatterns.slice(0, 2);
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -54,7 +69,7 @@ export default function PatternsPage() {
           <h2 className="text-lg font-semibold">Emerging Patterns</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {emergingPatterns.map((pattern) => (
+          {(enabled ? liveEmerging : emergingPatterns).map((pattern) => (
             <PatternCard
               key={pattern.name}
               name={pattern.name}
@@ -71,7 +86,7 @@ export default function PatternsPage() {
       <div>
         <h2 className="text-lg font-semibold mb-4">All Patterns</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {allPatterns.map((pattern) => (
+          {(enabled ? livePatterns : allPatterns).map((pattern) => (
             <PatternCard
               key={pattern.name}
               name={pattern.name}
