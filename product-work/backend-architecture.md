@@ -608,3 +608,113 @@ Event payloads include minimal fields for efficient UI updates:
 - Health score calculation < 100ms
 - Dashboard load time < 2s
 - 99.9% uptime
+
+## Evolved Product Addendum (vNext)
+
+This addendum documents the evolved product scope. It introduces Problem Clustering, Usage Intent Clustering, and clearer Health Scoring, shipped behind feature flags and without disrupting current milestones.
+
+- Feature flags:
+  - `FEATURE_CLUSTERING` — enable problem clustering endpoints and jobs
+  - `FEATURE_INTENTS` — enable usage intent clustering endpoints and jobs
+  - `ENABLE_PII_REDACTION` — redact PII before LLM/embedding calls
+
+- API additions (Bearer auth):
+  - Problems:
+    - `GET /api/v1/problems/top` — ranked clusters with counts and week-over-week trend
+    - `GET /api/v1/problems/:clusterId/traces` — example conversations in a cluster (paged)
+    - `GET /api/v1/problems/trends` — per-cluster daily counts (optional)
+  - Usage:
+    - `GET /api/v1/usage/intents` — clusters with share and health
+    - `GET /api/v1/usage/intents/:clusterId/traces` — example conversations
+  - Health:
+    - `GET /api/v1/analytics/health/summary` — overall health and trend
+
+- Data model (new tables; illustrative):
+  - `problem_clusters` (id, name, algo_version, timeframe, created_at, stats json)
+  - `conversation_problem_labels` (conversation_id, cluster_id, primary_label text, confidence, reasons json)
+  - `usage_intent_clusters` (id, name, label_source, algo_version, created_at, stats json)
+  - `conversation_intents` (conversation_id, cluster_id, confidence, exemplar_message_id)
+  - `conversation_health_metrics` (conversation_id, completion float, sentiment float, resolution float, score int, version text, computed_at)
+  - Extend `conversation_embeddings` with a `type` enum/text column: `problem|intent` to allow multiple embedding types
+
+- Worker/queue updates:
+  - Health scoring v1: weighted components (completion 40%, sentiment 30%, resolution 30%); v2 adds trajectory analysis; store `version`
+  - Detection signals: loops, nonsense (LLM judge), frustration, low health threshold; persist per-conversation `problem_signals`
+  - Clustering cadence: nightly `cluster-problems` and `cluster-intents` jobs; append-only labels; record `algo_version`
+  - Queue topology: `ingest-conversation` → `process-conversation` → `embed-conversation` → `cluster-problems`/`cluster-intents`
+  - Guardrails: batch external calls, cap items/run, PII redaction prior to LLM/embeddings
+
+- Frontend alignment:
+  - Overview: Overall Health card, Top Problems tile, Usage Patterns tile with links to drilldowns
+  - Drilldowns: cluster detail pages list representative traces; conversation detail remains unchanged
+
+### Example SQL (vNext)
+
+```sql
+-- Problem Clusters
+CREATE TABLE IF NOT EXISTS problem_clusters (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL,
+  algo_version TEXT NOT NULL,
+  timeframe TEXT,                 -- e.g., 'last_7d'
+  stats JSONB DEFAULT '{}'::jsonb,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS conversation_problem_labels (
+  conversation_id UUID REFERENCES conversations(id) ON DELETE CASCADE,
+  cluster_id UUID REFERENCES problem_clusters(id) ON DELETE CASCADE,
+  primary_label TEXT,
+  confidence REAL,
+  reasons JSONB,
+  created_at TIMESTAMP DEFAULT NOW(),
+  PRIMARY KEY (conversation_id, cluster_id)
+);
+
+-- Usage Intent Clusters
+CREATE TABLE IF NOT EXISTS usage_intent_clusters (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL,
+  label_source TEXT,              -- 'llm' | 'manual'
+  algo_version TEXT NOT NULL,
+  stats JSONB DEFAULT '{}'::jsonb,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS conversation_intents (
+  conversation_id UUID REFERENCES conversations(id) ON DELETE CASCADE,
+  cluster_id UUID REFERENCES usage_intent_clusters(id) ON DELETE CASCADE,
+  confidence REAL,
+  exemplar_message_id UUID REFERENCES messages(id),
+  created_at TIMESTAMP DEFAULT NOW(),
+  PRIMARY KEY (conversation_id, cluster_id)
+);
+
+-- Health metrics (component breakdown + version)
+CREATE TABLE IF NOT EXISTS conversation_health_metrics (
+  conversation_id UUID PRIMARY KEY REFERENCES conversations(id) ON DELETE CASCADE,
+  completion REAL,    -- 0..1
+  sentiment REAL,     -- -1..1 or 0..1 normalized
+  resolution REAL,    -- 0..1
+  score INT,          -- 0..100
+  version TEXT NOT NULL,
+  computed_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Option: evolve embeddings to support multiple types per conversation
+-- If you already have a PK on (conversation_id), move to composite PK (conversation_id, type)
+DO $$ BEGIN
+  ALTER TABLE conversation_embeddings DROP CONSTRAINT conversation_embeddings_pkey;
+EXCEPTION WHEN undefined_object THEN NULL; END $$;
+
+ALTER TABLE conversation_embeddings
+  ADD COLUMN IF NOT EXISTS type TEXT NOT NULL DEFAULT 'problem' CHECK (type IN ('problem','intent'));
+
+DO $$ BEGIN
+  ALTER TABLE conversation_embeddings ADD PRIMARY KEY (conversation_id, type);
+EXCEPTION WHEN duplicate_table THEN NULL; END $$;
+
+-- Optional: IVFFLAT index remains valid; consider per-type partial indexes if needed
+-- CREATE INDEX IF NOT EXISTS idx_conv_embeddings_problem ON conversation_embeddings USING ivfflat (embedding vector_l2_ops) WHERE type='problem';
+-- CREATE INDEX IF NOT EXISTS idx_conv_embeddings_intent  ON conversation_embeddings USING ivfflat (embedding vector_l2_ops) WHERE type='intent';
+```

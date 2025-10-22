@@ -11,6 +11,8 @@ This document tracks the concrete steps from the current codebase to a productio
 - M4A – SDK (client library)
 - M4B – Ingestion API (track conversations)
 - M4C – Demo Agent + SDK Playground
+- M4D – Problem Clustering (Pending)
+- M4E – Usage Intent Clustering (Pending)
 - M5 – Worker Pipeline (Queue + processing)
 - M6 – Alerts (Slack) – optional for MVP
 - M7 – Frontend switch to live data
@@ -134,6 +136,7 @@ This document tracks the concrete steps from the current codebase to a productio
 - Not yet implemented:
   - ⏩ DLQ/alerts for repeated failure (optional for MVP)
   - ⏩ Update `api_keys.last_used_at` in worker (can be added later)
+  - ⏩ vNext: health scoring phases, detection signals, clustering jobs, and PII redaction/cost guardrails
 - Acceptance:
   - New conversations trigger ingest → process → embeddings + patterns pipeline
   - Health scores, failures, embeddings, and patterns update within seconds
@@ -181,9 +184,10 @@ This document tracks the concrete steps from the current codebase to a productio
   - App loads with live data end‑to‑end; mock fallback behind flag only
  - Implemented today:
   - ✅ Live Data toggle (localStorage) + header switch; default OFF (mock)
-  - ✅ Overview page reads `/api/v1/analytics/summary` when Live Data is ON; otherwise uses mock values
+ - ✅ Overview page reads `/api/v1/analytics/summary` when Live Data is ON; otherwise uses mock values
  - Remaining to convert:
-  - ⏩ Replace mock tables/charts for Conversations, Failures, Patterns pages with live endpoints, guarded by the same toggle
+  - ⏩ Replace mock tables/charts for Conversations, Failures, Usage Patterns pages with live endpoints, guarded by the same toggle
+  - ⏩ Add Top Problems panel with drilldowns and trace links
 - Dependencies: M2, M3
 
 ## M8 – Testing, Hardening, Deploy
@@ -277,3 +281,42 @@ This document tracks the concrete steps from the current codebase to a productio
 - Env: `DATABASE_URL` (with `?sslmode=require`), `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_JWT_SECRET`
 - Scripts: `npm run db:up` (ensure extensions + push schema), `npm run db:generate` (create SQL migrations)
 - Schema highlights: `conversations`, `messages`, `failures`, `usage_patterns`, `conversation_embeddings`, `api_keys`, `app_settings`, `saved_views`
+
+## Evolved Product Addendum (vNext)
+
+This addendum captures the evolved product scope without renumbering the current plan. New work ships behind feature flags and does not block in‑flight milestones.
+
+- Summary: add Problem Clustering (new core), Usage Intent Clustering, clearer per‑conversation Health Scoring, and emphasis on trace‑linked verification and prioritization.
+
+- APIs to add:
+  - Problems:
+    - `GET /api/v1/problems/top` — ranked clusters with counts and trend
+    - `GET /api/v1/problems/:clusterId/traces` — paginated example conversations
+    - `GET /api/v1/problems/trends` — counts by day and cluster (optional)
+  - Usage:
+    - `GET /api/v1/usage/intents` — clusters with share and health
+    - `GET /api/v1/usage/intents/:clusterId/traces` — representative examples
+  - Health:
+    - `GET /api/v1/analytics/health/summary` — overall score and week‑over‑week trend
+
+- Worker updates:
+  - Health scoring: v1 uses weighted components (completion 40%, sentiment 30%, resolution 30%); v2 adds trajectory analysis; store `version` with metrics
+  - Detection signals: loops, nonsense (LLM judge), frustration, and low‑health threshold; persist `problem_signals` per conversation
+  - Problem clustering: Week 1 manual/keyword grouping; Week 2 embedding‑based clustering with LLM‑generated names; nightly job writes `problem_clusters` and labels
+  - Usage intent clustering: embed first user message; auto 5–10 clusters; compute health per cluster; allow rename later in UI
+  - Guardrails: PII redaction before LLM/embeddings; batch requests; cap items per run; record `algo_version`
+
+- Frontend (live data):
+  - Overview: Overall Health card, Top Problems tile, Usage Patterns tile; each links to drilldowns
+  - Drilldowns: cluster pages list example traces; conversation detail links preserved
+  - Feature flags: `FEATURE_CLUSTERING`, `FEATURE_INTENTS` default OFF until validated
+
+- Acceptance (vNext):
+  - Health scoring present for ≥95% conversations with component breakdown
+  - Top Problems shows ≥2 clusters on seed data; each has ≥5 example traces; names are human‑readable and reasonably stable
+  - Usage intents show 5–10 clusters with share and health; click‑through reveals examples
+
+- Risks & mitigations:
+  - Clustering stability: pin prompts, record `algo_version`, periodic evaluation on a fixed sample
+  - LLM cost/latency: batch calls, nightly cadence, cap volume per run
+  - Privacy/PII: redaction step with opt‑out flag; log anonymized summaries only

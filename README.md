@@ -10,6 +10,13 @@ A lightweight analytics platform for AI conversations. It scores conversation he
 - **Frontend:** React + Vite + Tailwind
 - **Auth:** Supabase Auth (Bearer JWT) for dashboard; API keys for ingestion
 
+## What's New (vNext, feature‑flagged)
+- **Top Problems (Problem Clustering):** Automatically clusters failed conversations and links to example traces.
+- **Usage Intent Clustering:** Groups conversations by user intent and shows health by cluster.
+- **Health Summary:** Overall health metric with week‑over‑week trend.
+
+Enable with env flags (default OFF): `FEATURE_CLUSTERING=true`, `FEATURE_INTENTS=true`, optional `ENABLE_PII_REDACTION=true`.
+
 ## Quick Start
 - **Prereqs:** Node 18+, npm, a Supabase project (Postgres URL), optional Redis if using workers later.
 - **Setup:**
@@ -18,6 +25,7 @@ A lightweight analytics platform for AI conversations. It scores conversation he
     - `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
     - `SUPABASE_JWT_SECRET` (optional in dev; if omitted, dashboard routes allow requests for local testing)
     - `INGEST_API_KEY` (for ingestion endpoint tests)
+    - vNext flags (optional; default OFF): `FEATURE_CLUSTERING`, `FEATURE_INTENTS`, `ENABLE_PII_REDACTION`
   - Initialize DB: `npm run db:up`
 - **Run (dev):** `npm run dev` → API and client on `http://localhost:3000`
 
@@ -66,6 +74,17 @@ A lightweight analytics platform for AI conversations. It scores conversation he
 - `GET /api/v1/analytics/summary?timeframe=24h|7d|30d` → KPIs + 7‑day volume trend
 - `GET /api/v1/analytics/failures/trends?from=&to=&bucket=day` → per‑type daily series
 
+### vNext APIs (behind flags)
+- Problems:
+  - `GET /api/v1/problems/top`
+  - `GET /api/v1/problems/:clusterId/traces`
+  - `GET /api/v1/problems/trends`
+- Usage:
+  - `GET /api/v1/usage/intents`
+  - `GET /api/v1/usage/intents/:clusterId/traces`
+- Health:
+  - `GET /api/v1/analytics/health/summary`
+
 ## Project Structure
 - `server/` – Express API, routes, middleware, db client
 - `shared/` – Drizzle schema and shared types
@@ -92,6 +111,6 @@ A lightweight analytics platform for AI conversations. It scores conversation he
 <a id="failures"></a>
 ![Failures](assets/failures.png)
 
-### Patterns
+### Usage Patterns
 <a id="patterns"></a>
-![Patterns](assets/patterns.png)
+![Usage Patterns](assets/patterns.png)
